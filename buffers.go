@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"sync/atomic"
 
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 type syncBuffer struct {
@@ -52,7 +52,7 @@ func (sb *syncBuffer) write(b []byte) (sync bool) {
 	sb.lock()
 	defer sb.unlock()
 	sb.buf.Grow(len(b))
-	sb.buf.WriteString(utils.ToString(b))
+	sb.buf.WriteString(internal.ToString(b))
 	return sb.buf.Len() >= sb.maxLen
 }
 
@@ -106,12 +106,12 @@ func (ob *oneRecordBuffer) unlock() {
 	}
 }
 
-func (ob *oneRecordBuffer) write(level LevelType, msg string, md []meta.Meta) {
+func (ob *oneRecordBuffer) write(level LevelType, msg string, md []encode.Meta) {
 	ob.lock()
 	defer ob.unlock()
 	ob.buf.Reset()
 	//ob.buf.Grow(ob.maxLen)
-	md0 := make([]meta.Meta, 0, 3)
+	md0 := make([]encode.Meta, 0, 3)
 	if UseTimeField {
 		md0 = append(md0, timeMeta())
 	}
@@ -129,7 +129,7 @@ func (ob *oneRecordBuffer) write(level LevelType, msg string, md []meta.Meta) {
 
 }
 
-func (ob *oneRecordBuffer) writeCommonMeta(md []meta.Meta) {
+func (ob *oneRecordBuffer) writeCommonMeta(md []encode.Meta) {
 	for i, msg := range md {
 		if i != 0 {
 			ob.writeFieldDelimiter()
@@ -148,7 +148,7 @@ func (ob *oneRecordBuffer) writeCommonMeta(md []meta.Meta) {
 	}
 }
 
-func (ob *oneRecordBuffer) writeCustomMeta(md []meta.Meta) {
+func (ob *oneRecordBuffer) writeCustomMeta(md []encode.Meta) {
 	for _, msg := range md {
 		lg := ob.buf.Len() + len(msg.Key()) + len(msg.Value())
 		if lg >= ob.maxLen {

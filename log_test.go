@@ -10,54 +10,54 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 var once sync.Once
 
 func TestDefault_overall(t *testing.T) {
 	defer Sync()
-	AddHooks(func() meta.Meta {
-		return meta.Int("socore", utils.RandInt(100))
+	AddHooks(func() encode.Meta {
+		return encode.Int("socore", internal.RandInt(100))
 	})
 
-	Hook(func() meta.Meta {
-		return meta.String("service", "demo")
+	Hook(func() encode.Meta {
+		return encode.String("service", "demo")
 	})
 
-	Hook(func() meta.Meta {
-		return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
+	Hook(func() encode.Meta {
+		return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
 	})
-	Debug("debugmsg", meta.Int("uid", 11))
-	Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
-	Warn("warnmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	Error("errmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	Panic("panicmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	// Fatal("fatalmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
+	Debug("debugmsg", encode.Int("uid", 11))
+	Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
+	Warn("warnmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	Error("errmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	Panic("panicmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	// Fatal("fatalmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
 }
 
 func TestNew_overall(t *testing.T) {
 	newLog := New()
 	defer newLog.Sync()
-	AddHooks(func() meta.Meta {
-		return meta.Int("socore", utils.RandInt(100))
+	AddHooks(func() encode.Meta {
+		return encode.Int("socore", internal.RandInt(100))
 	})
 
-	newLog.Hook(func() meta.Meta {
-		return meta.String("service", "demo")
+	newLog.Hook(func() encode.Meta {
+		return encode.String("service", "demo")
 	})
 
-	newLog.Hook(func() meta.Meta {
-		return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
+	newLog.Hook(func() encode.Meta {
+		return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
 	})
 
-	newLog.Debug("你好中国", meta.Int("uid", 11))
-	newLog.Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
-	newLog.Warn("warnmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	newLog.Error("errmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	newLog.Panic("panicmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
-	// newLog.Fatal("fatalmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
+	newLog.Debug("你好中国", encode.Int("uid", 11))
+	newLog.Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
+	newLog.Warn("warnmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	newLog.Error("errmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	newLog.Panic("panicmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	// newLog.Fatal("fatalmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
 }
 
 func BenchmarkLog_default(b *testing.B) {
@@ -66,22 +66,22 @@ func BenchmarkLog_default(b *testing.B) {
 	DeFault().WithWriterCloser(Discard, false, false)
 	once.Do(func() {
 
-		AddHooks(func() meta.Meta {
-			return meta.Int("score", utils.RandInt(100))
+		AddHooks(func() encode.Meta {
+			return encode.Int("score", internal.RandInt(100))
 		})
 
-		Hook(func() meta.Meta {
-			return meta.String("service", "demo")
+		Hook(func() encode.Meta {
+			return encode.String("service", "demo")
 		})
 
-		Hook(func() meta.Meta {
-			return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
+		Hook(func() encode.Meta {
+			return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
 		})
 
 	})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
+		Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
 	}
 
 }
@@ -98,34 +98,34 @@ func BenchmarkLog_new(b *testing.B) {
 	once.Do(func() {
 
 		TimeFieldFormat = time.StampMilli
-		score := utils.RandInt(100)
-		AddHooks(func() meta.Meta {
-			return meta.Int("score", score)
+		score := internal.RandInt(100)
+		AddHooks(func() encode.Meta {
+			return encode.Int("score", score)
 		})
 
-		newLog.Hook(func() meta.Meta {
-			return meta.String("service", "demo")
+		newLog.Hook(func() encode.Meta {
+			return encode.String("service", "demo")
 		})
 
-		newLog.Hook(func() meta.Meta {
-			return meta.String("from", "demo-service")
+		newLog.Hook(func() encode.Meta {
+			return encode.String("from", "demo-service")
 		})
 
-		serverID := int64(utils.RandInt(1000) + 1000)
-		newLog.Hook(func() meta.Meta {
-			return meta.Int64("service-id", serverID)
+		serverID := int64(internal.RandInt(1000) + 1000)
+		newLog.Hook(func() encode.Meta {
+			return encode.Int64("service-id", serverID)
 		})
 
-		randomStr := utils.RandomString(1024)
-		newLog.Hook(func() meta.Meta {
-			return meta.String("randomstr", randomStr)
+		randomStr := internal.RandomString(1024)
+		newLog.Hook(func() encode.Meta {
+			return encode.String("randomstr", randomStr)
 		})
 	})
 	defer newLog.Sync()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		newLog.Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
+		newLog.Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
 	}
 
 }
@@ -143,9 +143,9 @@ func TestZeroLog(t *testing.T) {
 func BenchmarkZeroLog(b *testing.B) {
 	zerolog.TimeFieldFormat = time.StampMilli
 	zerolog.MessageFieldName = "msg"
-	score := utils.RandInt(100)
-	serverID := int64(utils.RandInt(1000) + 1000)
-	randomStr := utils.RandomString(1024)
+	score := internal.RandInt(100)
+	serverID := int64(internal.RandInt(1000) + 1000)
+	randomStr := internal.RandomString(1024)
 	logger := zerolog.New(ioutil.Discard).With().Timestamp().Logger()
 
 	b.ResetTimer()

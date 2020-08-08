@@ -2,7 +2,7 @@ package simplelog
 
 import (
 	"fmt"
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/internal"
 	"os"
 	"path"
 	"strings"
@@ -75,7 +75,7 @@ func (op *options) rename() string {
 	if len(ext) > 0 {
 		newName = append(newName, []byte(ext)...)
 	}
-	return utils.ToString(newName)
+	return internal.ToString(newName)
 }
 
 func (op *options) dir() string {

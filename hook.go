@@ -1,18 +1,18 @@
 package simplelog
 
 import (
-	"github.com/tanzy2018/simplelog/meta"
+	"github.com/tanzy2018/simplelog/encode"
 )
 
 var globalHooks = new(hook)
 
 // HookFunc ...
-type HookFunc func() meta.Meta
+type HookFunc func() encode.Meta
 
 // IHook ...
 type IHook interface {
 	Add(hfs ...HookFunc)
-	Hooks() []meta.Meta
+	Hooks() []encode.Meta
 }
 
 type hook struct {
@@ -28,11 +28,11 @@ func (h *hook) Add(hfs ...HookFunc) {
 	}
 }
 
-func (h *hook) Hooks() []meta.Meta {
+func (h *hook) Hooks() []encode.Meta {
 	if h == nil {
 		return nil
 	}
-	md := make([]meta.Meta, 0, len(h.hfs))
+	md := make([]encode.Meta, 0, len(h.hfs))
 	for _, hf := range h.hfs {
 		md = append(md, hf())
 	}
@@ -45,6 +45,6 @@ func AddHooks(hfs ...HookFunc) {
 }
 
 // Hooks ...
-func Hooks() []meta.Meta {
+func Hooks() []encode.Meta {
 	return globalHooks.Hooks()
 }

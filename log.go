@@ -8,24 +8,24 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 // Logger ...
 type Logger interface {
 	// Debug ...
-	Debug(msg string, md ...meta.Meta)
+	Debug(msg string, md ...encode.Meta)
 	// Info ...
-	Info(msg string, md ...meta.Meta)
+	Info(msg string, md ...encode.Meta)
 	// Warn ...
-	Warn(msg string, md ...meta.Meta)
+	Warn(msg string, md ...encode.Meta)
 	// Error ...
-	Error(msg string, md ...meta.Meta)
+	Error(msg string, md ...encode.Meta)
 	// Panic ...
-	Panic(msg string, md ...meta.Meta)
+	Panic(msg string, md ...encode.Meta)
 	// Fatal ...
-	Fatal(msg string, md ...meta.Meta)
+	Fatal(msg string, md ...encode.Meta)
 }
 
 // Log ...
@@ -61,7 +61,7 @@ func New(ops ...Option) *Log {
 }
 
 // Debug ...
-func (l *Log) Debug(msg string, md ...meta.Meta) {
+func (l *Log) Debug(msg string, md ...encode.Meta) {
 	// 少一次函数调用
 	if l.op.level > int32(DEBUG) {
 		return
@@ -70,7 +70,7 @@ func (l *Log) Debug(msg string, md ...meta.Meta) {
 }
 
 // Info ...
-func (l *Log) Info(msg string, md ...meta.Meta) {
+func (l *Log) Info(msg string, md ...encode.Meta) {
 	// reduce another function call
 	if l.op.level > int32(INFO) {
 		return
@@ -79,7 +79,7 @@ func (l *Log) Info(msg string, md ...meta.Meta) {
 }
 
 // Warn ...
-func (l *Log) Warn(msg string, md ...meta.Meta) {
+func (l *Log) Warn(msg string, md ...encode.Meta) {
 	// reduce another function call
 	if l.op.level > int32(WARN) {
 		return
@@ -88,7 +88,7 @@ func (l *Log) Warn(msg string, md ...meta.Meta) {
 }
 
 // Error ...
-func (l *Log) Error(msg string, md ...meta.Meta) {
+func (l *Log) Error(msg string, md ...encode.Meta) {
 	// reduce another function call
 	if l.op.level > int32(ERROR) {
 		return
@@ -97,7 +97,7 @@ func (l *Log) Error(msg string, md ...meta.Meta) {
 }
 
 // Panic ...
-func (l *Log) Panic(msg string, md ...meta.Meta) {
+func (l *Log) Panic(msg string, md ...encode.Meta) {
 	// reduce another function call
 	if l.op.level > int32(PANIC) {
 		return
@@ -106,7 +106,7 @@ func (l *Log) Panic(msg string, md ...meta.Meta) {
 }
 
 // Fatal ...
-func (l *Log) Fatal(msg string, md ...meta.Meta) {
+func (l *Log) Fatal(msg string, md ...encode.Meta) {
 	// reduce another function call
 	if l.op.level > int32(FATAL) {
 		return
@@ -215,8 +215,8 @@ func (l *Log) orChangeFileWriter() {
 
 }
 
-func (l *Log) write(level LevelType, msg string, md ...meta.Meta) {
-	idx := utils.RandInt(l.op.recordBufsLen)
+func (l *Log) write(level LevelType, msg string, md ...encode.Meta) {
+	idx := internal.RandInt(l.op.recordBufsLen)
 	l.recordBufs[idx].write(level, msg, md)
 	sync := l.syncBufs[idx].write(l.recordBufs[idx].flushAsBytes())
 	if l.op.writeDirect || sync {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 const (
@@ -43,32 +43,32 @@ var (
 	MsgFieldName string = "msg"
 )
 
-func timeMeta() meta.Meta {
+func timeMeta() encode.Meta {
 	if TimeFieldFormat == TimestampUnixFormat {
-		return meta.Int64(TimeFieldName, time.Now().Unix())
+		return encode.Int64(TimeFieldName, time.Now().Unix())
 	}
 
 	if TimeFieldFormat == TimestampUnixMilliFormat {
-		return meta.Int64(TimeFieldName, time.Now().UnixNano()/1000000)
+		return encode.Int64(TimeFieldName, time.Now().UnixNano()/1000000)
 	}
 
 	if TimeFieldFormat == TimestampUnixMicroFormat {
-		return meta.Int64(TimeFieldName, time.Now().UnixNano()/1000)
+		return encode.Int64(TimeFieldName, time.Now().UnixNano()/1000)
 	}
 
 	if TimeFieldFormat == TimestampUnixNanoFormat {
-		return meta.Int64(TimeFieldName, time.Now().UnixNano())
+		return encode.Int64(TimeFieldName, time.Now().UnixNano())
 	}
 
-	return meta.String(TimeFieldName, utils.TimeFormat(TimeFieldFormat))
+	return encode.String(TimeFieldName, internal.TimeFormat(TimeFieldFormat))
 }
 
-func levelMeta(level LevelType) meta.Meta {
-	return meta.String(LevelFieldName, level.String())
+func levelMeta(level LevelType) encode.Meta {
+	return encode.String(LevelFieldName, level.String())
 }
 
-func msgMeta(msg string) meta.Meta {
-	return meta.String(MsgFieldName, msg)
+func msgMeta(msg string) encode.Meta {
+	return encode.String(MsgFieldName, msg)
 }
 
 func genRenameSubfix(csec, msec int64) string {

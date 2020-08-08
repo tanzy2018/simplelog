@@ -1,11 +1,11 @@
-package meta
+package encode
 
 import (
-	"github.com/tanzy2018/simplelog/utils"
+	"github.com/tanzy2018/simplelog/internal"
 	"strconv"
 )
 
-var toBytes = utils.ToBytes
+var toBytes = internal.ToBytes
 
 // Meta ...
 type Meta interface {
