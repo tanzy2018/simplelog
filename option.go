@@ -1,33 +1,17 @@
 package simplelog
 
 import (
+	"fmt"
+	"github.com/tanzy2018/simplelog/utils"
+	"os"
 	"path"
 	"strings"
 	"time"
-
-	"github.com/tanzy2018/simplelog/utils"
-)
-
-// LevelType ...
-type LevelType int32
-
-const (
-	_ LevelType = iota
-	// DEBUG ...
-	DEBUG
-	// INFO ...
-	INFO
-	// WARN ...
-	WARN
-	// ERROR ...
-	ERROR
-	// PANIC ...
-	PANIC
-	// FATAL ...
-	FATAL
 )
 
 var defaultOption = _defaultOPtion()
+
+var notAutoRenameFileNames = [3]string{"/dev/stdout", "/dev/stdin", "/dev/stderr"}
 
 func _defaultOPtion() *options {
 	return &options{
@@ -40,27 +24,14 @@ func _defaultOPtion() *options {
 		recordBufsLen:  10,
 		syncInterval:   time.Millisecond * 100,
 		hook:           new(hook),
+		errHandler: func(err error) {
+			fmt.Fprintf(os.Stderr, "log op err:%v\n", err)
+		},
 	}
 }
 
-func (level LevelType) String() string {
-	ltype := "debug"
-	switch level {
-	case DEBUG:
-		ltype = "debug"
-	case INFO:
-		ltype = "info"
-	case WARN:
-		ltype = "warn"
-	case ERROR:
-		ltype = "error"
-	case PANIC:
-		ltype = "panic"
-	case FATAL:
-		ltype = "fatal"
-	}
-	return ltype
-}
+// ErrorHandler ... handle the error from the log.
+type ErrorHandler func(error)
 
 // Option ...
 type Option func(op *options)
@@ -69,13 +40,14 @@ type options struct {
 	root           string
 	topic          string
 	fname          string
+	errHandler     ErrorHandler
 	maxSyncBufSize int
 	maxFileSize    int64
 	maxRecordSize  int
 	syncBufsLen    int
 	recordBufsLen  int
 	writeDirect    bool
-	fileCreateTime int64
+	cTime          int64
 	syncInterval   time.Duration
 	hook           IHook
 }
@@ -95,7 +67,7 @@ func (op *options) rename() string {
 	full := op.fullPath()
 	base := path.Base(op.fname)
 	ext := path.Ext(base)
-	subfix := genRenameSubfix(op.fileCreateTime, time.Now().Unix())
+	subfix := genRenameSubfix(op.cTime, time.Now().Unix())
 	newName := make([]byte, 0, len(full))
 	newName = append(newName, []byte(full)[:len(full)-len(base)]...)
 	newName = append(newName, []byte(base)[:len(base)-len(ext)]...)
@@ -112,13 +84,27 @@ func (op *options) dir() string {
 		strings.Trim(strings.ReplaceAll(op.topic, "\\", "/"), "/"))
 }
 
-// WithFileWriter ...
-func WithFileWriter(root, topic, fname string) Option {
-	return func(op *options) {
-		op.fname = fname
-		op.root = root
-		op.topic = topic
+func (op *options) isAutoRenameFile() bool {
+	fname := op.fullPath()
+	for _, fn := range notAutoRenameFileNames {
+		if fname == fn {
+			return false
+		}
 	}
+	return true
+}
+
+func (op *options) updateFileOption(root, topic, fname string) {
+	op.root = root
+	op.topic = topic
+	op.fname = fname
+}
+
+func (op *options) isValidFileName() bool {
+	if len(op.fullPath()) == 0 {
+		return false
+	}
+	return true
 }
 
 // WithMaxFileSize ...
@@ -183,5 +169,12 @@ func WithSyncInterval(dur time.Duration) Option {
 		if dur > 0 {
 			op.syncInterval = dur
 		}
+	}
+}
+
+// WithErrorHandler ...
+func WithErrorHandler(f ErrorHandler) Option {
+	return func(op *options) {
+		op.errHandler = f
 	}
 }

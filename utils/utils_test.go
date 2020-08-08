@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ func TestToString(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
-	s := []byte("你好")
+	s := strings.Join([]string{"", "", ""}, "/")
 	fmt.Println(s)
 }
 
@@ -56,11 +57,5 @@ var testStr = RandomString(10240)
 func BenchmarkToBytes(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = ToBytes(testStr)
-	}
-}
-
-func Benchmark_stdByte(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = []byte(testStr)
 	}
 }

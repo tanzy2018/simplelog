@@ -15,8 +15,8 @@ func _defaultLog() *Log {
 	}
 	l.syncBufs = newSyncBuffers(l, l.op.maxSyncBufSize, l.op.syncBufsLen)
 	l.recordBufs = newOneRecordBuffers(l, l.op.maxRecordSize, l.op.recordBufsLen)
-	l.file = os.Stdout
-	l.isStdio = true
+	l.wc = os.Stdout
+	l.autoReName = false
 	atomic.StoreInt32(&l.alock, 0)
 	l.lo = new(sync.Mutex)
 	l.backendSync()
@@ -63,26 +63,7 @@ func Sync() {
 	defaultLog.Sync()
 }
 
-// InitFileWriter ... Warn
-func InitFileWriter(root, topic, fname string) error {
-	defaultLog.op.root = root
-	defaultLog.op.topic = topic
-	defaultLog.op.fname = fname
-	if err := defaultLog.makedir(); err != nil {
-		return err
-	}
-	if err := defaultLog.closeFile(); err != nil {
-		return err
-	}
-	if err := defaultLog.openFile(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// SetDirectWrite ...
-func SetDirectWrite(directWrite bool) {
-	defaultLog.lock()
-	defer defaultLog.unlock()
-	defaultLog.op.writeDirect = directWrite
+// DeFault ...
+func DeFault() *Log {
+	return defaultLog
 }

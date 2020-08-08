@@ -1,8 +1,7 @@
 package simplelog
 
 import (
-	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
 
 	// "runtime"
@@ -19,11 +18,6 @@ var once sync.Once
 
 func TestDefault_overall(t *testing.T) {
 	defer Sync()
-	err := InitFileWriter("testdata",
-		"", "overall-default.txt")
-	if err != nil {
-		panic(fmt.Errorf("panic open file:%v", err))
-	}
 	AddHooks(func() meta.Meta {
 		return meta.Int("socore", utils.RandInt(100))
 	})
@@ -44,14 +38,7 @@ func TestDefault_overall(t *testing.T) {
 }
 
 func TestNew_overall(t *testing.T) {
-	newLog, err := New(WithFileWriter(
-		"testdata",
-		"",
-		"overall-new.txt"))
-	if err != nil {
-		panic(fmt.Errorf("panic open file:%v", err))
-	}
-
+	newLog := New()
 	defer newLog.Sync()
 	AddHooks(func() meta.Meta {
 		return meta.Int("socore", utils.RandInt(100))
@@ -74,11 +61,9 @@ func TestNew_overall(t *testing.T) {
 }
 
 func BenchmarkLog_default(b *testing.B) {
-	InitFileWriter("testdata",
-		"", "overall-default.txt")
-	SetDirectWrite(false)
 	TimeFieldFormat = TimestampUnixMilliFormat
 	defer Sync()
+	DeFault().WithWriterCloser(Discard, false, false)
 	once.Do(func() {
 
 		AddHooks(func() meta.Meta {
@@ -103,21 +88,15 @@ func BenchmarkLog_default(b *testing.B) {
 
 func BenchmarkLog_new(b *testing.B) {
 	// runtime.GOMAXPROCS(2)
-	newLog, err := New(
-		WithFileWriter(
-			"testdata",
-			"",
-			"overall-newsimple.txt"),
+	var newLog *Log
+	newLog = New(
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
-		WithMaxFileSize(1024*1024*1024))
-	if err != nil {
-		panic(fmt.Errorf("panic open file:%v", err))
-	}
-
-	defer newLog.Sync()
-
+		WithMaxFileSize(1024*1024*1024)).
+		WithWriterCloser(Discard, false, true)
+	// WithFileWriter("testdata", "", "overall-newsimple.txt")
 	once.Do(func() {
+
 		TimeFieldFormat = time.StampMilli
 		score := utils.RandInt(100)
 		AddHooks(func() meta.Meta {
@@ -142,54 +121,13 @@ func BenchmarkLog_new(b *testing.B) {
 			return meta.String("randomstr", randomStr)
 		})
 	})
+	defer newLog.Sync()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		newLog.Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
 	}
 
-}
-
-func TestStdLog(t *testing.T) {
-	path := "testdata/overall.txt"
-	file := openFile(path)
-	defer file.Close()
-	stdLog := newStdLogger(file)
-	stdLog.Println(`{"time":"2020-08-07 11:09:58","level":"info","msg":"infomsg","uid":"12","detail":"xxxxinfo...."}`)
-}
-
-func BenchmarkStdLog(b *testing.B) {
-	path := "testdata/overall.txt"
-	file := openFile(path)
-	defer file.Close()
-	stdLog := newStdLogger(file)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		s := fmt.Sprintf(`{"time":"%s","level":"%s","msg":"%s","uid":%d,"detail":"%s"}`,
-			utils.TimeFormat(""), "infomsg", "detail", 12, "xxxxinfo....")
-		stdLog.Println(s)
-	}
-}
-
-func TestFileLog(t *testing.T) {
-	path := "testdata/overall.txt"
-	fl := newFileLog(path)
-	defer fl.close()
-	s := fmt.Sprintf(`{"time":"%s","level":"%s","msg":"%s","uid":%d,"detail":"%s"}`,
-		utils.TimeFormat(""), "infomsg", "detail", 12, "xxxxinfo....")
-	fl.write(s)
-}
-
-func BenchmarkFileLog(b *testing.B) {
-	path := "testdata/overall.txt"
-	fl := newFileLog(path)
-	defer fl.close()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		s := fmt.Sprintf("{\"time\":\"%s\",\"level\":\"%s\",\"msg\":\"%s\",\"uid\":%d,\"detail\":\"%s\"}\n",
-			utils.TimeFormat(""), "infomsg", "detail", 12, "xxxxinfo....")
-		fl.write(s)
-	}
 }
 
 func TestZeroLog(t *testing.T) {
@@ -208,10 +146,7 @@ func BenchmarkZeroLog(b *testing.B) {
 	score := utils.RandInt(100)
 	serverID := int64(utils.RandInt(1000) + 1000)
 	randomStr := utils.RandomString(1024)
-	path := "testdata/overall-zero.txt"
-	file := openFile(path)
-	logger := zerolog.New(file).With().Timestamp().Logger()
-	defer file.Close()
+	logger := zerolog.New(ioutil.Discard).With().Timestamp().Logger()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -227,59 +162,7 @@ func BenchmarkZeroLog(b *testing.B) {
 	}
 }
 
-func newStdLogger(fi *os.File) *log.Logger {
-	return log.New(fi, "", 0)
-}
-
 func openFile(path string) *os.File {
 	file, _ := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	return file
-}
-
-type fileLog struct {
-	file *os.File
-	ch   []chan string
-	sync.WaitGroup
-}
-
-func newFileLog(path string) *fileLog {
-	file := openFile(path)
-	f := &fileLog{
-		file: file,
-		ch:   make([]chan string, 10),
-	}
-	for i := range f.ch {
-		f.ch[i] = make(chan string, 1024)
-	}
-
-	for i := range f.ch {
-		f.Add(1)
-		go func(ch chan string) {
-			for {
-				select {
-				case s, ok := <-ch:
-					if !ok {
-						f.Done()
-						return
-					}
-					f.file.WriteString(s)
-				}
-			}
-
-		}(f.ch[i])
-	}
-	return f
-}
-
-func (f *fileLog) write(s string) {
-	idx := utils.RandInt(10)
-	f.ch[idx] <- s
-}
-
-func (f *fileLog) close() {
-	for i := range f.ch {
-		close(f.ch[i])
-	}
-	f.Wait()
-	f.file.Close()
 }
