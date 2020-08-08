@@ -25,6 +25,11 @@ func ToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
+// ToBytes ...
+func ToBytes(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(&s))
+}
+
 // RandInt ...
 func RandInt(n int) int {
 	if n <= 1 {

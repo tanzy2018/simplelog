@@ -1,8 +1,11 @@
 package meta
 
 import (
+	"github.com/tanzy2018/simplelog/utils"
 	"strconv"
 )
+
+var toBytes = utils.ToBytes
 
 // Meta ...
 type Meta interface {
@@ -32,8 +35,8 @@ func (m *_imeta) Wrap() bool {
 // Int ...
 func Int(key string, val int) Meta {
 	return &_imeta{
-		key:      []byte(key),
-		value:    []byte(strconv.FormatInt(int64(val), 10)),
+		key:      toBytes(key),
+		value:    toBytes(strconv.FormatInt(int64(val), 10)),
 		needWrap: false,
 	}
 }
@@ -41,8 +44,8 @@ func Int(key string, val int) Meta {
 // Int64 ...
 func Int64(key string, val int64) Meta {
 	return &_imeta{
-		key:      []byte(key),
-		value:    []byte(strconv.FormatInt(val, 10)),
+		key:      toBytes(key),
+		value:    toBytes(strconv.FormatInt(val, 10)),
 		needWrap: false,
 	}
 }
@@ -50,8 +53,8 @@ func Int64(key string, val int64) Meta {
 // String ...
 func String(key string, val string) Meta {
 	return &_imeta{
-		key:      []byte(key),
-		value:    []byte(val),
+		key:      toBytes(key),
+		value:    toBytes(val),
 		needWrap: true,
 	}
 }
