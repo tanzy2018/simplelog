@@ -1,13 +1,15 @@
 package simplelog
 
 import (
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
+	"io"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/tanzy2018/simplelog/meta"
+	"github.com/tanzy2018/simplelog/utils"
 )
 
 // Logger ...
@@ -29,7 +31,7 @@ type Logger interface {
 // Log ...
 type Log struct {
 	op          *options
-	file        *os.File
+	file        io.WriteCloser
 	curFileSize int64
 	isStdio     bool // stdout,stderr
 	syncBufs    []*syncBuffer
@@ -117,7 +119,7 @@ func (l *Log) sync(idx int) {
 	defer l.unlock()
 	l.curFileSize += int64(len(b))
 
-	l.file.WriteString(utils.ToString(b))
+	l.file.Write(b)
 
 	l.orChangeFileWriter()
 
@@ -132,8 +134,8 @@ func (l *Log) syncAll() {
 			continue
 		}
 		l.curFileSize += int64(len(b))
-		l.file.WriteString(utils.ToString(b))
-		// l.file.WriteString("11")
+		// l.file.WriteString(utils.ToString(b))
+		l.file.Write(b)
 		l.orChangeFileWriter()
 	}
 }

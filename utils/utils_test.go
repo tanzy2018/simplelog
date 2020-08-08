@@ -25,7 +25,8 @@ func TestToString(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
-	fmt.Println(1596788792192 - 1596788790100)
+	s := []byte("你好")
+	fmt.Println(s)
 }
 
 func TestToBytes(t *testing.T) {

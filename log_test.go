@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	// "runtime"
-	"github.com/rs/zerolog"
-	"github.com/tanzy2018/simplelog/meta"
-	"github.com/tanzy2018/simplelog/utils"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/tanzy2018/simplelog/meta"
+	"github.com/tanzy2018/simplelog/utils"
 )
 
 var once sync.Once
@@ -33,7 +35,6 @@ func TestDefault_overall(t *testing.T) {
 	Hook(func() meta.Meta {
 		return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
 	})
-
 	Debug("debugmsg", meta.Int("uid", 11))
 	Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
 	Warn("warnmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
@@ -64,7 +65,7 @@ func TestNew_overall(t *testing.T) {
 		return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
 	})
 
-	newLog.Debug("debugmsg", meta.Int("uid", 11))
+	newLog.Debug("你好中国", meta.Int("uid", 11))
 	newLog.Info("infomsg", meta.Int("uid", 12), meta.String("detail", "xxxxinfo...."))
 	newLog.Warn("warnmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
 	newLog.Error("errmsg", meta.Int("uid", 13), meta.String("detail", "xxxxwarn...."))
@@ -81,7 +82,7 @@ func BenchmarkLog_default(b *testing.B) {
 	once.Do(func() {
 
 		AddHooks(func() meta.Meta {
-			return meta.Int("socore", utils.RandInt(100))
+			return meta.Int("score", utils.RandInt(100))
 		})
 
 		Hook(func() meta.Meta {
@@ -120,12 +121,17 @@ func BenchmarkLog_new(b *testing.B) {
 		TimeFieldFormat = time.StampMilli
 		score := utils.RandInt(100)
 		AddHooks(func() meta.Meta {
-			return meta.Int("socore", score)
+			return meta.Int("score", score)
 		})
 
 		newLog.Hook(func() meta.Meta {
 			return meta.String("service", "demo")
 		})
+
+		newLog.Hook(func() meta.Meta {
+			return meta.String("from", "demo-service")
+		})
+
 		serverID := int64(utils.RandInt(1000) + 1000)
 		newLog.Hook(func() meta.Meta {
 			return meta.Int64("service-id", serverID)
@@ -133,7 +139,7 @@ func BenchmarkLog_new(b *testing.B) {
 
 		randomStr := utils.RandomString(1024)
 		newLog.Hook(func() meta.Meta {
-			return meta.String("randomestr", randomStr)
+			return meta.String("randomstr", randomStr)
 		})
 	})
 
@@ -193,7 +199,7 @@ func TestZeroLog(t *testing.T) {
 	file := openFile(path)
 	defer file.Close()
 	logger := zerolog.New(file).With().Timestamp().Logger()
-	logger.Info().Str("detail", "xxxxinfo....").Int("uid", 12).Msg("infomsg")
+	logger.Info().Str("detail", "你好中国").Int("uid", 12).Msg("infomsg")
 }
 
 func BenchmarkZeroLog(b *testing.B) {
@@ -212,9 +218,11 @@ func BenchmarkZeroLog(b *testing.B) {
 		logger.Info().
 			Str("detail", "xxxxinfo....").
 			Int("uid", 12).
-			Int("socore", score).
+			Int("score", score).
+			Str("service", "demo").
 			Int64("service-id", serverID).
 			Str("randomestr", randomStr).
+			Str("from", "demo-service").
 			Msg("infomsg")
 	}
 }
