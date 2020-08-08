@@ -14,6 +14,7 @@ const (
 	endDelimiter   = '\n'
 	fieldDelimiter = ','
 	kvDelimiter    = ':'
+	valueWrapper   = '"'
 )
 
 const (

@@ -134,9 +134,17 @@ func (ob *oneRecordBuffer) writeCommonMeta(md []meta.Meta) {
 		if i != 0 {
 			ob.writeFieldDelimiter()
 		}
+		ob.writeWrapper()
 		ob.buf.Write(msg.Key())
+		ob.writeWrapper()
 		ob.writeKVDelimiter()
+		if msg.Wrap() {
+			ob.writeWrapper()
+		}
 		ob.buf.Write(msg.Value())
+		if msg.Wrap() {
+			ob.writeWrapper()
+		}
 	}
 }
 
@@ -147,10 +155,22 @@ func (ob *oneRecordBuffer) writeCustomMeta(md []meta.Meta) {
 			return
 		}
 		ob.writeFieldDelimiter()
+		ob.writeWrapper()
 		ob.buf.Write(msg.Key())
+		ob.writeWrapper()
 		ob.writeKVDelimiter()
+		if msg.Wrap() {
+			ob.writeWrapper()
+		}
 		ob.buf.Write(msg.Value())
+		if msg.Wrap() {
+			ob.writeWrapper()
+		}
 	}
+}
+
+func (ob *oneRecordBuffer) writeWrapper() {
+	ob.buf.WriteByte(valueWrapper)
 }
 
 func (ob *oneRecordBuffer) writeLeftDelimiter() {

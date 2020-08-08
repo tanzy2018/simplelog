@@ -5,12 +5,12 @@ import (
 	"log"
 	"os"
 	// "runtime"
-	"sync"
-	"testing"
-
 	"github.com/rs/zerolog"
 	"github.com/tanzy2018/simplelog/meta"
 	"github.com/tanzy2018/simplelog/utils"
+	"sync"
+	"testing"
+	"time"
 )
 
 var once sync.Once
@@ -106,10 +106,10 @@ func BenchmarkLog_new(b *testing.B) {
 		WithFileWriter(
 			"testdata",
 			"",
-			"overall-new.txt"),
+			"overall-newsimple.txt"),
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
-		WithMaxFileSize(1024*1024*100))
+		WithMaxFileSize(1024*1024*1024))
 	if err != nil {
 		panic(fmt.Errorf("panic open file:%v", err))
 	}
@@ -117,21 +117,23 @@ func BenchmarkLog_new(b *testing.B) {
 	defer newLog.Sync()
 
 	once.Do(func() {
-		TimeFieldFormat = "2006-01-02 15:04:05"
+		TimeFieldFormat = time.StampMilli
+		score := utils.RandInt(100)
 		AddHooks(func() meta.Meta {
-			return meta.Int("socore", utils.RandInt(100))
+			return meta.Int("socore", score)
 		})
 
 		newLog.Hook(func() meta.Meta {
 			return meta.String("service", "demo")
 		})
-
+		serverID := int64(utils.RandInt(1000) + 1000)
 		newLog.Hook(func() meta.Meta {
-			return meta.Int64("service-id", int64(utils.RandInt(1000)+1000))
+			return meta.Int64("service-id", serverID)
 		})
 
+		randomStr := utils.RandomString(1024)
 		newLog.Hook(func() meta.Meta {
-			return meta.String("randomestr", utils.RandomString(1024))
+			return meta.String("randomestr", randomStr)
 		})
 	})
 
@@ -185,7 +187,7 @@ func BenchmarkFileLog(b *testing.B) {
 }
 
 func TestZeroLog(t *testing.T) {
-	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
+	zerolog.TimeFieldFormat = time.StampMilli
 	zerolog.MessageFieldName = "msg"
 	path := "testdata/overall.txt"
 	file := openFile(path)
@@ -195,15 +197,25 @@ func TestZeroLog(t *testing.T) {
 }
 
 func BenchmarkZeroLog(b *testing.B) {
-	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
+	zerolog.TimeFieldFormat = time.StampMilli
 	zerolog.MessageFieldName = "msg"
-	path := "testdata/overall.txt"
+	score := utils.RandInt(100)
+	serverID := int64(utils.RandInt(1000) + 1000)
+	randomStr := utils.RandomString(1024)
+	path := "testdata/overall-zero.txt"
 	file := openFile(path)
 	logger := zerolog.New(file).With().Timestamp().Logger()
 	defer file.Close()
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		logger.Info().Str("detail", "xxxxinfo....").Int("uid", 12).Msg("infomsg")
+		logger.Info().
+			Str("detail", "xxxxinfo....").
+			Int("uid", 12).
+			Int("socore", score).
+			Int64("service-id", serverID).
+			Str("randomestr", randomStr).
+			Msg("infomsg")
 	}
 }
 

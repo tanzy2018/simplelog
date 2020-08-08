@@ -8,75 +8,50 @@ import (
 type Meta interface {
 	Key() []byte
 	Value() []byte
+	Wrap() bool
 }
 
-type intMeta struct {
-	key   string
-	value int
+type _imeta struct {
+	key      []byte
+	value    []byte
+	needWrap bool
 }
 
-func (im intMeta) Key() []byte {
-	return wrapValue(im.key)
+func (m *_imeta) Key() []byte {
+	return m.key
 }
 
-func (im intMeta) Value() []byte {
-	return []byte(strconv.FormatInt(int64(im.value), 10))
+func (m *_imeta) Value() []byte {
+	return m.value
 }
 
-type int64Meta struct {
-	key   string
-	value int64
-}
-
-func (im int64Meta) Key() []byte {
-	return wrapValue(im.key)
-}
-
-func (im int64Meta) Value() []byte {
-	return []byte(strconv.FormatInt(int64(im.value), 10))
-}
-
-type stringMeta struct {
-	key   string
-	value string
-}
-
-func (sm stringMeta) Key() []byte {
-	return wrapValue(sm.key)
-}
-
-func (sm stringMeta) Value() []byte {
-	return wrapValue(sm.value)
+func (m *_imeta) Wrap() bool {
+	return m.needWrap
 }
 
 // Int ...
-func Int(key string, value int) Meta {
-	return intMeta{
-		key:   key,
-		value: value,
+func Int(key string, val int) Meta {
+	return &_imeta{
+		key:      []byte(key),
+		value:    []byte(strconv.FormatInt(int64(val), 10)),
+		needWrap: false,
 	}
 }
 
 // Int64 ...
-func Int64(key string, value int64) Meta {
-	return int64Meta{
-		key:   key,
-		value: value,
+func Int64(key string, val int64) Meta {
+	return &_imeta{
+		key:      []byte(key),
+		value:    []byte(strconv.FormatInt(val, 10)),
+		needWrap: false,
 	}
 }
 
 // String ...
-func String(key string, value string) Meta {
-	return stringMeta{
-		key:   key,
-		value: value,
+func String(key string, val string) Meta {
+	return &_imeta{
+		key:      []byte(key),
+		value:    []byte(val),
+		needWrap: true,
 	}
-}
-
-func wrapValue(val string) []byte {
-	b := make([]byte, 0, len(val))
-	b = append(b, '"')
-	b = append(b, []byte(val)...)
-	b = append(b, '"')
-	return b
 }
