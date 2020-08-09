@@ -1,11 +1,10 @@
 package internal_test
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
-	"testing"
-
 	. "github.com/tanzy2018/simplelog/internal"
+	"testing"
 )
 
 func TestToString(t *testing.T) {
@@ -28,8 +27,15 @@ func TestToString(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
-	s := strings.Join([]string{"", "", ""}, "/")
-	fmt.Println(s)
+	//m := map[string]interface{}{"name": "tanzy"}
+	// var m map[string]interface{}
+	b, _ := json.Marshal((map[string]interface{})(nil))
+	_ = b
+	// var s []int
+	// if s == nil {
+
+	// }
+	t.Errorf("%s", b)
 }
 
 func TestToBytes(t *testing.T) {

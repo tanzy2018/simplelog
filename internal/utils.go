@@ -25,11 +25,17 @@ func TimeFormat(format string) string {
 
 // ToString ...
 func ToString(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
 	return *(*string)(unsafe.Pointer(&b))
 }
 
 // ToBytes ...
 func ToBytes(s string) []byte {
+	if len(s) == 0 {
+		return nil
+	}
 	return *(*[]byte)(unsafe.Pointer(&s))
 }
 

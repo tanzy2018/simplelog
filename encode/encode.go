@@ -1,10 +1,10 @@
 package encode
 
 import (
-	"encoding/json"
-	"github.com/tanzy2018/simplelog/internal"
 	"reflect"
 	"strconv"
+
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 var toBytes = internal.ToBytes
@@ -374,7 +374,9 @@ func Strings(key string, strs []string) Meta {
 		if i > 0 {
 			vals = append(vals, ',')
 		}
+		vals = append(vals, '"')
 		vals = append(vals, toBytes(strs[i])...)
+		vals = append(vals, '"')
 	}
 	vals = append(vals, ']')
 	return imeta{
@@ -422,45 +424,132 @@ func Object(key string, val interface{}) Meta {
 
 	v := reflect.ValueOf(val)
 	if v.Kind() == reflect.Ptr {
-		v = reflect.ValueOf(v.Elem())
-	}
-
-	if v.Kind() != reflect.Map || v.Kind() != reflect.Struct {
-		return nullImeta(key)
-	}
-
-	b, err := json.Marshal(v.Interface())
-	if err != nil {
-		return nullImeta(key)
-	}
-
-	return imeta{
-		key:      toBytes(key),
-		value:    b,
-		needWrap: false,
-	}
-}
-
-// Objects ...[map(*map),] or [struct(*struct),]
-func Objects(key string, vals []interface{}) Meta {
-	if len(vals) == 0 {
-		return emptyArrayImeta(key)
-	}
-
-	bs := make([]byte, 0, 2)
-	bs = append(bs, '[')
-	for i := range vals {
-		if i > 0 {
-			bs = append(bs, ',')
+		if !v.Elem().IsValid() {
+			return nullImeta(key)
 		}
-		bs = append(bs, Object("", vals[i]).Value()...)
+		v = reflect.ValueOf(v.Elem().Interface())
 	}
-	bs = append(bs, ']')
-	return imeta{
-		key:      toBytes(key),
-		value:    bs,
-		needWrap: false,
+
+	kind := v.Kind()
+	if kind == reflect.Map {
+		if v.IsNil() {
+			return nullImeta(key)
+		}
+		mIter := v.MapRange()
+		buf := make([]byte, 0, 2)
+		i := 0
+		buf = append(buf, '{')
+		for mIter.Next() {
+			if i > 0 {
+				buf = append(buf, ',')
+			}
+			md := Any(toString(append([]byte{}, Any("", mIter.Key().Interface()).Value()...)),
+				mIter.Value().Interface())
+			buf = append(buf, '"')
+			buf = append(buf, md.Key()...)
+			buf = append(buf, '"')
+			buf = append(buf, ':')
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			buf = append(buf, md.Value()...)
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			i++
+		}
+		buf = append(buf, '}')
+
+		return imeta{
+			key:      toBytes(key),
+			value:    buf,
+			needWrap: false,
+		}
 	}
+
+	if kind == reflect.Struct {
+		buf := make([]byte, 0, 2)
+		buf = append(buf, '{')
+		for i := 0; i < v.NumField(); i++ {
+			if i > 0 {
+				buf = append(buf, ',')
+			}
+
+			md := Any(v.Type().Field(i).Name, v.Field(i).Interface())
+			buf = append(buf, '"')
+			buf = append(buf, md.Key()...)
+			buf = append(buf, '"')
+			buf = append(buf, ':')
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			buf = append(buf, md.Value()...)
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+		}
+		buf = append(buf, '}')
+
+		return imeta{
+			key:      toBytes(key),
+			value:    buf,
+			needWrap: false,
+		}
+	}
+
+	if kind == reflect.Array {
+		buf := make([]byte, 0, 2)
+		buf = append(buf, '[')
+		for i := 0; i < v.Len(); i++ {
+			if i > 0 {
+				buf = append(buf, ',')
+			}
+			md := Any("", v.Index(i).Interface())
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			buf = append(buf, md.Value()...)
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+		}
+		buf = append(buf, ']')
+		return imeta{
+			key:      toBytes(key),
+			value:    buf,
+			needWrap: false,
+		}
+	}
+
+	if kind == reflect.Slice {
+		if v.IsNil() {
+			return emptyArrayImeta(key)
+		}
+		buf := make([]byte, 0, 2)
+		buf = append(buf, '[')
+		for i := 0; i < v.Len(); i++ {
+			if i > 0 {
+				buf = append(buf, ',')
+			}
+			md := Any("", v.Index(i).Interface())
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			buf = append(buf, md.Value()...)
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+		}
+		buf = append(buf, ']')
+		return imeta{
+			key:      toBytes(key),
+			value:    buf,
+			needWrap: false,
+		}
+	}
+
+	return nullImeta(key)
+
 }
 
 // Any ...
@@ -468,13 +557,6 @@ func Any(key string, any interface{}) Meta {
 
 	if _imeta := Object(key, any); null != toString(_imeta.Value()) {
 		return _imeta
-	}
-
-	if v, ok := any.([]interface{}); ok {
-		_imeta := Objects(key, v)
-		if null != toString(_imeta.Value()) {
-			return _imeta
-		}
 	}
 
 	switch any.(type) {
@@ -507,236 +589,92 @@ func Any(key string, any interface{}) Meta {
 		return String(key, any.(string))
 	case bool:
 		return Bool(key, any.(bool))
-	case []int:
-		return Ints(key, any.([]int))
-	case []int8:
-		return Int8s(key, any.([]int8))
-	case []int16:
-		return Int16s(key, any.([]int16))
-	case []int32:
-		return Int32s(key, any.([]int32))
-	case []int64:
-		return Int64s(key, any.([]int64))
-	case []uint:
-		return Uints(key, any.([]uint))
-	case []uint8:
-		return Uint8s(key, any.([]uint8))
-	case []uint16:
-		return Uint16s(key, any.([]uint16))
-	case []uint32:
-		return Uint32s(key, any.([]uint32))
-	case []uint64:
-		return Uint64s(key, any.([]uint64))
-	case []float32:
-		return Float32s(key, any.([]float32))
-	case []float64:
-		return Float64s(key, any.([]float64))
-	case []string:
-		return Strings(key, any.([]string))
-	case []bool:
-		return Bools(key, any.([]bool))
-
 	case *int:
-		return Int(key, *(any.(*int)))
+		v := any.(*int)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Int(key, *v)
 	case *int8:
-		return Int8(key, *(any.(*int8)))
+		v := any.(*int8)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Int8(key, *v)
 	case *int16:
-		return Int16(key, *(any.(*int16)))
+		v := any.(*int16)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Int16(key, *v)
 	case *int32:
-		return Int32(key, *(any.(*int32)))
+		v := any.(*int32)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Int32(key, *v)
 	case *int64:
-		return Int64(key, *(any.(*int64)))
+		v := any.(*int64)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Int64(key, *v)
 	case *uint:
-		return Uint(key, *(any.(*uint)))
+		v := any.(*uint)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Uint(key, *v)
 	case *uint8:
-		return Uint8(key, *(any.(*uint8)))
+		v := any.(*uint8)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Uint8(key, *v)
 	case *uint16:
-		return Uint16(key, *(any.(*uint16)))
+		v := any.(*uint16)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Uint16(key, *v)
 	case *uint32:
-		return Uint32(key, *(any.(*uint32)))
+		v := any.(*uint32)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Uint32(key, *v)
 	case *uint64:
-		return Uint64(key, *(any.(*uint64)))
+		v := any.(*uint64)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Uint64(key, *v)
 	case *float32:
-		return Float32(key, *(any.(*float32)))
+		v := any.(*float32)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Float32(key, *v)
 	case *float64:
-		return Float64(key, *(any.(*float64)))
+		v := any.(*float64)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Float64(key, *v)
 	case *string:
-		return String(key, *(any.(*string)))
+		v := any.(*string)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return String(key, *v)
 	case *bool:
-		return Bool(key, *(any.(*bool)))
-
-	case []*int:
-		return Ints(key, intPtrs2ints(any.([]*int)))
-	case []*int8:
-		return Int8s(key, int8Ptrs2int8s(any.([]*int8)))
-	case []*int16:
-		return Int16s(key, int16Ptrs2int16s(any.([]*int16)))
-	case []*int32:
-		return Int32s(key, int32Ptrs2int32s(any.([]*int32)))
-	case []*int64:
-		return Int64s(key, int64Ptrs2int64s(any.([]*int64)))
-	case []*uint:
-		return Uints(key, uintPtrs2uints(any.([]*uint)))
-	case []*uint8:
-		return Uint8s(key, uint8Ptrs2uint8s(any.([]*uint8)))
-	case []*uint16:
-		return Uint16s(key, uint16Ptrs2uint16s(any.([]*uint16)))
-	case []*uint32:
-		return Uint32s(key, uint32Ptrs2uint32s(any.([]*uint32)))
-	case []*uint64:
-		return Uint64s(key, uint64Ptrs2uint64s(any.([]*uint64)))
-	case []*float32:
-		return Float32s(key, float32Ptrs2Float32s(any.([]*float32)))
-	case []*float64:
-		return Float64s(key, float64Ptrs2Float64s(any.([]*float64)))
-	case []*string:
-		return Strings(key, stringPtrs2Strings(any.([]*string)))
-	case []*bool:
-		return Bools(key, boolPtrs2Bools(any.([]*bool)))
-
-	case *[]int:
-		return Ints(key, *(any.(*[]int)))
-	case *[]int8:
-		return Int8s(key, *(any.(*[]int8)))
-	case *[]int16:
-		return Int16s(key, *(any.(*[]int16)))
-	case *[]int32:
-		return Int32s(key, *(any.(*[]int32)))
-	case *[]int64:
-		return Int64s(key, *(any.(*[]int64)))
-	case *[]uint:
-		return Uints(key, *(any.(*[]uint)))
-	case *[]uint8:
-		return Uint8s(key, *(any.(*[]uint8)))
-	case *[]uint16:
-		return Uint16s(key, *(any.(*[]uint16)))
-	case *[]uint32:
-		return Uint32s(key, *(any.(*[]uint32)))
-	case *[]uint64:
-		return Uint64s(key, *(any.(*[]uint64)))
-	case *[]float32:
-		return Float32s(key, *(any.(*[]float32)))
-	case *[]float64:
-		return Float64s(key, *(any.(*[]float64)))
-	case *[]string:
-		return Strings(key, *(any.(*[]string)))
-	case *[]bool:
-		return Bools(key, *(any.(*[]bool)))
-	default:
-		return nullImeta(key)
+		v := any.(*bool)
+		if v == nil {
+			return nullImeta(key)
+		}
+		return Bool(key, *v)
 	}
-}
-
-func intPtrs2ints(in []*int) []int {
-	out := make([]int, 0, len(in))
-	for i := range in {
-		out = append(out, *in[i])
-	}
-	return out
-}
-
-func int8Ptrs2int8s(in []*int8) []int8 {
-	out := make([]int8, 0, len(in))
-	for i := range in {
-		out = append(out, *in[i])
-	}
-	return out
-}
-
-func int16Ptrs2int16s(in []*int16) []int16 {
-	out := make([]int16, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func int32Ptrs2int32s(in []*int32) []int32 {
-	out := make([]int32, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func int64Ptrs2int64s(in []*int64) []int64 {
-	out := make([]int64, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func uintPtrs2uints(in []*uint) []uint {
-	out := make([]uint, 0, len(in))
-	for i := range in {
-		out = append(out, *in[i])
-	}
-	return out
-}
-
-func uint8Ptrs2uint8s(in []*uint8) []uint8 {
-	out := make([]uint8, 0, len(in))
-	for i := range in {
-		out = append(out, *in[i])
-	}
-	return out
-}
-
-func uint16Ptrs2uint16s(in []*uint16) []uint16 {
-	out := make([]uint16, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func uint32Ptrs2uint32s(in []*uint32) []uint32 {
-	out := make([]uint32, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func uint64Ptrs2uint64s(in []*uint64) []uint64 {
-	out := make([]uint64, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func float64Ptrs2Float64s(in []*float64) []float64 {
-	out := make([]float64, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func float32Ptrs2Float32s(in []*float32) []float32 {
-	out := make([]float32, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func stringPtrs2Strings(in []*string) []string {
-	out := make([]string, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
-}
-
-func boolPtrs2Bools(in []*bool) []bool {
-	out := make([]bool, 0, len(in))
-	for i := range in {
-		out = append(out, *(in[i]))
-	}
-	return out
+	return nullImeta(key)
 }
 
 func nullImeta(key string) Meta {
