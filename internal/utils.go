@@ -2,6 +2,9 @@ package internal
 
 import (
 	"math/rand"
+	"runtime"
+	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -64,4 +67,46 @@ func randomString(n int) []byte {
 	}
 
 	return tpl[:n]
+}
+
+// CallStack ...
+func CallStack(skip int) string {
+	if skip < 1 {
+		skip = 1
+	}
+	firstFrame, depth := skip, 20+skip
+	var (
+		pc   uintptr
+		file string
+		line int
+		ok   bool
+	)
+	ok = true
+	callers := make([]byte, 0, 1024)
+	for {
+		pc, file, line, ok = runtime.Caller(skip)
+		if !ok {
+			return ToString(callers[:len(callers)])
+		}
+		if strings.Contains(file, "/src/runtime/") {
+			skip++
+			firstFrame++
+			continue
+		}
+		f := runtime.FuncForPC(pc)
+		if skip > firstFrame {
+			callers = append(callers, []byte("->")...)
+		}
+		callers = append(callers, ToBytes(file)...)
+		callers = append(callers, ':')
+		callers = append(callers, ToBytes(strconv.FormatInt(int64(line), 10))...)
+		callers = append(callers, '.')
+		callers = append(callers, '(')
+		callers = append(callers, ToBytes(f.Name())...)
+		callers = append(callers, ')')
+		skip++
+		if skip > depth {
+			return ToString(callers[:len(callers)])
+		}
+	}
 }

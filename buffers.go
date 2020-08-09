@@ -112,7 +112,7 @@ func (ob *oneRecordBuffer) write(level LevelType, msg string, md []encode.Meta) 
 	ob.buf.Reset()
 	//ob.buf.Grow(ob.maxLen)
 	md0 := make([]encode.Meta, 0, 3)
-	if UseTimeField {
+	if EnableTimeField {
 		md0 = append(md0, timeMeta())
 	}
 	md0 = append(md0,
@@ -124,6 +124,9 @@ func (ob *oneRecordBuffer) write(level LevelType, msg string, md []encode.Meta) 
 	ob.writeLeftDelimiter()
 	ob.writeCommonMeta(md0)
 	ob.writeCustomMeta(md)
+	if level == PANIC {
+		ob.writeStackMeta()
+	}
 	ob.writeRightDelimiter()
 	ob.writeEndDelimiter()
 
@@ -166,6 +169,21 @@ func (ob *oneRecordBuffer) writeCustomMeta(md []encode.Meta) {
 		if msg.Wrap() {
 			ob.writeWrapper()
 		}
+	}
+}
+
+func (ob *oneRecordBuffer) writeStackMeta() {
+	md := stackMeta()
+	ob.writeWrapper()
+	ob.buf.Write(md.Key())
+	ob.writeWrapper()
+	ob.writeKVDelimiter()
+	if md.Wrap() {
+		ob.writeWrapper()
+	}
+	ob.buf.Write(md.Value())
+	if md.Wrap() {
+		ob.writeWrapper()
 	}
 }
 

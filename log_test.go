@@ -16,29 +16,11 @@ import (
 
 var once sync.Once
 
-func TestDefault_overall(t *testing.T) {
-	defer Sync()
-	AddHooks(func() encode.Meta {
-		return encode.Int("socore", internal.RandInt(100))
-	})
-
-	Hook(func() encode.Meta {
-		return encode.String("service", "demo")
-	})
-
-	Hook(func() encode.Meta {
-		return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
-	})
-	Debug("debugmsg", encode.Int("uid", 11))
-	Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
-	Warn("warnmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
-	Error("errmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
-	Panic("panicmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
-	// Fatal("fatalmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
-}
-
-func TestNew_overall(t *testing.T) {
-	newLog := New()
+func TestSimpleLog(t *testing.T) {
+	newLog := New(
+		WithRecordBufsLen(20),
+		WithSyncBufsLen(20),
+	)
 	defer newLog.Sync()
 	AddHooks(func() encode.Meta {
 		return encode.Int("socore", internal.RandInt(100))
@@ -52,6 +34,8 @@ func TestNew_overall(t *testing.T) {
 		return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
 	})
 
+	time.Sleep(time.Millisecond * 500)
+
 	newLog.Debug("你好中国", encode.Int("uid", 11))
 	newLog.Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
 	newLog.Warn("warnmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
@@ -60,41 +44,17 @@ func TestNew_overall(t *testing.T) {
 	// newLog.Fatal("fatalmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
 }
 
-func BenchmarkLog_default(b *testing.B) {
-	TimeFieldFormat = TimestampUnixMilliFormat
-	defer Sync()
-	DeFault().WithWriterCloser(Discard, false, false)
-	once.Do(func() {
-
-		AddHooks(func() encode.Meta {
-			return encode.Int("score", internal.RandInt(100))
-		})
-
-		Hook(func() encode.Meta {
-			return encode.String("service", "demo")
-		})
-
-		Hook(func() encode.Meta {
-			return encode.Int64("service-id", int64(internal.RandInt(1000)+1000))
-		})
-
-	})
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
-	}
-
-}
-
-func BenchmarkLog_new(b *testing.B) {
-	// runtime.GOMAXPROCS(2)
+func BenchmarkSimpleLog(b *testing.B) {
+	// runtime.GOMAXPROCS(1)
 	var newLog *Log
 	newLog = New(
+		WithRecordBufsLen(20),
+		WithSyncBufsLen(20),
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
 		WithMaxFileSize(1024*1024*1024)).
 		WithWriterCloser(Discard, false, true)
-	// WithFileWriter("testdata", "", "overall-newsimple.txt")
+		// WithFileWriter("testdata", "", "simplelog.txt")
 	once.Do(func() {
 
 		TimeFieldFormat = time.StampMilli

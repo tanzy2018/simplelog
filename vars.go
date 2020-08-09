@@ -31,16 +31,18 @@ const (
 )
 
 var (
-	// UseTimeField ...
-	UseTimeField = true
+	// EnableTimeField ...
+	EnableTimeField = true
 	// TimeFieldName ...
-	TimeFieldName string = "time"
+	TimeFieldName = "time"
 	// TimeFieldFormat ...
-	TimeFieldFormat string = "2006-01-02 15:04:05"
+	TimeFieldFormat = "2006-01-02 15:04:05"
 	// LevelFieldName ...
-	LevelFieldName string = "level"
+	LevelFieldName = "level"
 	// MsgFieldName ...
-	MsgFieldName string = "msg"
+	MsgFieldName = "msg"
+	// StackFieldName ...
+	StackFieldName = "stack"
 )
 
 func timeMeta() encode.Meta {
@@ -69,6 +71,10 @@ func levelMeta(level LevelType) encode.Meta {
 
 func msgMeta(msg string) encode.Meta {
 	return encode.String(MsgFieldName, msg)
+}
+
+func stackMeta() encode.Meta {
+	return encode.String(StackFieldName, internal.CallStack(6))
 }
 
 func genRenameSubfix(csec, msec int64) string {

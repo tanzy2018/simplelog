@@ -1,15 +1,14 @@
 package simplelog
 
 import (
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 	"io"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/tanzy2018/simplelog/encode"
-	"github.com/tanzy2018/simplelog/internal"
 )
 
 // Logger ...
@@ -185,7 +184,7 @@ func (l *Log) sync(idx int) {
 }
 
 func (l *Log) syncAll() {
-	for i := 0; i < l.op.syncBufsLen; i++ {
+	for i := 0; i < len(l.syncBufs); i++ {
 		b := l.syncBufs[i].flushAsBytes()
 		if len(b) == 0 {
 			continue
