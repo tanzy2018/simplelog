@@ -417,7 +417,7 @@ func Bools(key string, bs []bool) Meta {
 }
 
 // Object ... map(*map) or struct(*struct)
-func Object(key string, val interface{}) Meta {
+func any(key string, val interface{}) Meta {
 	if val == nil {
 		return nullImeta(key)
 	}
@@ -431,6 +431,36 @@ func Object(key string, val interface{}) Meta {
 	}
 
 	kind := v.Kind()
+	if kind == reflect.Struct {
+		buf := make([]byte, 0, 2)
+		buf = append(buf, '{')
+		for i := 0; i < v.NumField(); i++ {
+			if i > 0 {
+				buf = append(buf, ',')
+			}
+
+			md := Any(v.Type().Field(i).Name, v.Field(i).Interface())
+			buf = append(buf, '"')
+			buf = append(buf, md.Key()...)
+			buf = append(buf, '"')
+			buf = append(buf, ':')
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+			buf = append(buf, md.Value()...)
+			if md.Wrap() {
+				buf = append(buf, '"')
+			}
+		}
+		buf = append(buf, '}')
+
+		return imeta{
+			key:      toBytes(key),
+			value:    buf,
+			needWrap: false,
+		}
+	}
+
 	if kind == reflect.Map {
 		if v.IsNil() {
 			return nullImeta(key)
@@ -467,19 +497,17 @@ func Object(key string, val interface{}) Meta {
 		}
 	}
 
-	if kind == reflect.Struct {
+	if kind == reflect.Slice {
+		if v.IsNil() {
+			return emptyArrayImeta(key)
+		}
 		buf := make([]byte, 0, 2)
-		buf = append(buf, '{')
-		for i := 0; i < v.NumField(); i++ {
+		buf = append(buf, '[')
+		for i := 0; i < v.Len(); i++ {
 			if i > 0 {
 				buf = append(buf, ',')
 			}
-
-			md := Any(v.Type().Field(i).Name, v.Field(i).Interface())
-			buf = append(buf, '"')
-			buf = append(buf, md.Key()...)
-			buf = append(buf, '"')
-			buf = append(buf, ':')
+			md := Any("", v.Index(i).Interface())
 			if md.Wrap() {
 				buf = append(buf, '"')
 			}
@@ -488,8 +516,7 @@ func Object(key string, val interface{}) Meta {
 				buf = append(buf, '"')
 			}
 		}
-		buf = append(buf, '}')
-
+		buf = append(buf, ']')
 		return imeta{
 			key:      toBytes(key),
 			value:    buf,
@@ -521,154 +548,127 @@ func Object(key string, val interface{}) Meta {
 		}
 	}
 
-	if kind == reflect.Slice {
-		if v.IsNil() {
-			return emptyArrayImeta(key)
-		}
-		buf := make([]byte, 0, 2)
-		buf = append(buf, '[')
-		for i := 0; i < v.Len(); i++ {
-			if i > 0 {
-				buf = append(buf, ',')
-			}
-			md := Any("", v.Index(i).Interface())
-			if md.Wrap() {
-				buf = append(buf, '"')
-			}
-			buf = append(buf, md.Value()...)
-			if md.Wrap() {
-				buf = append(buf, '"')
-			}
-		}
-		buf = append(buf, ']')
-		return imeta{
-			key:      toBytes(key),
-			value:    buf,
-			needWrap: false,
-		}
-	}
-
 	return nullImeta(key)
 
 }
 
 // Any ...
-func Any(key string, any interface{}) Meta {
+func Any(key string, val interface{}) Meta {
 
-	if _imeta := Object(key, any); null != toString(_imeta.Value()) {
-		return _imeta
+	if md := any(key, val); null != toString(md.Value()) {
+		return md
 	}
 
-	switch any.(type) {
+	switch val.(type) {
 
 	case int:
-		return Int(key, any.(int))
+		return Int(key, val.(int))
 	case int8:
-		return Int8(key, any.(int8))
+		return Int8(key, val.(int8))
 	case int16:
-		return Int16(key, any.(int16))
+		return Int16(key, val.(int16))
 	case int32:
-		return Int32(key, any.(int32))
+		return Int32(key, val.(int32))
 	case int64:
-		return Int64(key, any.(int64))
+		return Int64(key, val.(int64))
 	case uint:
-		return Uint(key, any.(uint))
+		return Uint(key, val.(uint))
 	case uint8:
-		return Uint8(key, any.(uint8))
+		return Uint8(key, val.(uint8))
 	case uint16:
-		return Uint16(key, any.(uint16))
+		return Uint16(key, val.(uint16))
 	case uint32:
-		return Uint32(key, any.(uint32))
+		return Uint32(key, val.(uint32))
 	case uint64:
-		return Uint64(key, any.(uint64))
+		return Uint64(key, val.(uint64))
 	case float32:
-		return Float32(key, any.(float32))
+		return Float32(key, val.(float32))
 	case float64:
-		return Float64(key, any.(float64))
+		return Float64(key, val.(float64))
 	case string:
-		return String(key, any.(string))
+		return String(key, val.(string))
 	case bool:
-		return Bool(key, any.(bool))
+		return Bool(key, val.(bool))
 	case *int:
-		v := any.(*int)
+		v := val.(*int)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Int(key, *v)
 	case *int8:
-		v := any.(*int8)
+		v := val.(*int8)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Int8(key, *v)
 	case *int16:
-		v := any.(*int16)
+		v := val.(*int16)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Int16(key, *v)
 	case *int32:
-		v := any.(*int32)
+		v := val.(*int32)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Int32(key, *v)
 	case *int64:
-		v := any.(*int64)
+		v := val.(*int64)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Int64(key, *v)
 	case *uint:
-		v := any.(*uint)
+		v := val.(*uint)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Uint(key, *v)
 	case *uint8:
-		v := any.(*uint8)
+		v := val.(*uint8)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Uint8(key, *v)
 	case *uint16:
-		v := any.(*uint16)
+		v := val.(*uint16)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Uint16(key, *v)
 	case *uint32:
-		v := any.(*uint32)
+		v := val.(*uint32)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Uint32(key, *v)
 	case *uint64:
-		v := any.(*uint64)
+		v := val.(*uint64)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Uint64(key, *v)
 	case *float32:
-		v := any.(*float32)
+		v := val.(*float32)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Float32(key, *v)
 	case *float64:
-		v := any.(*float64)
+		v := val.(*float64)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return Float64(key, *v)
 	case *string:
-		v := any.(*string)
+		v := val.(*string)
 		if v == nil {
 			return nullImeta(key)
 		}
 		return String(key, *v)
 	case *bool:
-		v := any.(*bool)
+		v := val.(*bool)
 		if v == nil {
 			return nullImeta(key)
 		}
