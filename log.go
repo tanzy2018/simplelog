@@ -216,12 +216,13 @@ func (l *Log) orChangeFileWriter() {
 
 func (l *Log) write(level LevelType, msg string, md ...encode.Meta) {
 	idx := internal.RandInt(l.op.recordBufsLen)
+	idx1 := internal.RandInt(l.op.syncBufsLen)
 	l.recordBufs[idx].write(level, msg, md)
-	sync := l.syncBufs[idx].write(l.recordBufs[idx].flushAsBytes())
+	sync := l.syncBufs[idx1].write(l.recordBufs[idx].flushAsBytes())
 	if l.op.writeDirect || sync {
 		l.lock()
 		defer l.unlock()
-		l.sync(idx)
+		l.sync(idx1)
 		return
 	}
 

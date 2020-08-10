@@ -118,7 +118,7 @@ func TestAny(t *testing.T) {
 		{"Object_map_0", args{"object_map_0", map[string]interface{}{"name": "tanzy"}}, imeta{[]byte("object_map_0"), []byte(`{"name":"tanzy"}`), false}},
 		{"Object_map_1", args{"object_map_1", map[int]interface{}{1: 18}}, imeta{[]byte("object_map_1"), []byte(`{"1":18}`), false}},
 		{"Object_map_2", args{"object_map_2", map[int]interface{}{}}, imeta{[]byte("object_map_2"), []byte("{}"), false}},
-		{"Object_map_3", args{"object_map_3", (map[string]interface{})(nil)}, imeta{[]byte("object_map_3"), []byte("null"), false}},
+		{"Object_map_3", args{"object_map_3", (map[string]interface{})(nil)}, nullImeta("object_map_3")},
 		{"Object_map_4", args{"object_map_4", map[string]int{"age": 18}}, imeta{[]byte("object_map_4"), []byte(`{"age":18}`), false}},
 		{"Object_map_5", args{"object_map_5", map[string]map[int]string{"first": {1: "A"}}}, imeta{[]byte("object_map_5"), []byte(`{"first":{"1":"A"}}`), false}},
 		// object struct
@@ -129,119 +129,120 @@ func TestAny(t *testing.T) {
 		{"Object_*map_0", args{"object_*map_0", &map[string]interface{}{"name": "tanzy"}}, imeta{[]byte("object_*map_0"), []byte(`{"name":"tanzy"}`), false}},
 		{"Object_*map_1", args{"object_*map_1", &map[int]interface{}{1: 18}}, imeta{[]byte("object_*map_1"), []byte(`{"1":18}`), false}},
 		{"Object_*map_2", args{"object_*map_2", &map[int]interface{}{}}, imeta{[]byte("object_*map_2"), []byte("{}"), false}},
-		{"Object_*map_3", args{"object_*map_3", (*map[string]interface{})(nil)}, imeta{[]byte("object_*map_3"), []byte("null"), false}},
+		{"Object_*map_3", args{"object_*map_3", (*map[string]interface{})(nil)}, nullImeta("object_*map_3")},
 
 		// object *struct
 		{"Object_*struct_0", args{"object_*struct_0", &anyStruct{}}, imeta{[]byte("object_*struct_0"), []byte(`{"Name":"","Age":0,"Flag":false}`), false}},
 		{"Object_*struct_1", args{"object_*struct_1", &anyStruct{"tanzy", 18, true}}, imeta{[]byte("object_*struct_1"), []byte(`{"Name":"tanzy","Age":18,"Flag":true}`), false}},
-		{"Object_*struct_2", args{"object_*struct_2", (*anyStruct)(nil)}, imeta{[]byte("object_*struct_2"), []byte("null"), false}},
+		{"Object_*struct_2", args{"object_*struct_2", (*anyStruct)(nil)}, nullImeta("object_*struct_2")},
 
 		// ints*
-		{"Ints_0", args{"ints_0", []int{}}, imeta{[]byte("ints_0"), []byte("[]"), false}},
-		{"Ints_1", args{"ints_1", ([]int)(nil)}, imeta{[]byte("ints_1"), []byte("[]"), false}},
+		{"Ints_0", args{"ints_0", []int{}}, emptyArrayImeta("ints_0")},
+		{"Ints_1", args{"ints_1", ([]int)(nil)}, emptyArrayImeta("ints_1")},
 		{"Ints_2", args{"ints_2", []int{1}}, imeta{[]byte("ints_2"), []byte("[1]"), false}},
 		{"Ints_3", args{"ints_3", []int{1, -2, 3}}, imeta{[]byte("ints_3"), []byte("[1,-2,3]"), false}},
 		{"Ints_4", args{"ints_4", [3]int{1, -2, 3}}, imeta{[]byte("ints_4"), []byte("[1,-2,3]"), false}},
 
-		{"Int8s_0", args{"int8s_0", []int8{}}, imeta{[]byte("int8s_0"), []byte("[]"), false}},
-		{"Int8s_1", args{"int8s_1", ([]int8)(nil)}, imeta{[]byte("int8s_1"), []byte("[]"), false}},
+		{"Int8s_0", args{"int8s_0", []int8{}}, emptyArrayImeta("int8s_0")},
+		{"Int8s_1", args{"int8s_1", ([]int8)(nil)}, emptyArrayImeta("int8s_1")},
 		{"Int8s_2", args{"int8s_2", []int8{1}}, imeta{[]byte("int8s_2"), []byte("[1]"), false}},
 		{"Int8s_3", args{"int8s_3", []int8{1, -2, 3}}, imeta{[]byte("int8s_3"), []byte("[1,-2,3]"), false}},
 
-		{"Int16s_0", args{"int16s_0", []int16{}}, imeta{[]byte("int16s_0"), []byte("[]"), false}},
-		{"Int16s_1", args{"int16s_1", ([]int16)(nil)}, imeta{[]byte("int16s_1"), []byte("[]"), false}},
+		{"Int16s_0", args{"int16s_0", []int16{}}, emptyArrayImeta("int16s_0")},
+		{"Int16s_1", args{"int16s_1", ([]int16)(nil)}, emptyArrayImeta("int16s_1")},
 		{"Int16s_2", args{"int16s_2", []int16{1}}, imeta{[]byte("int16s_2"), []byte("[1]"), false}},
 		{"Int16s_3", args{"int16s_3", []int16{1, -2, 3}}, imeta{[]byte("int16s_3"), []byte("[1,-2,3]"), false}},
 
-		{"Int32s_0", args{"int32s_0", []int32{}}, imeta{[]byte("int32s_0"), []byte("[]"), false}},
-		{"Int32s_1", args{"int32s_1", ([]int32)(nil)}, imeta{[]byte("int32s_1"), []byte("[]"), false}},
+		{"Int32s_0", args{"int32s_0", []int32{}}, emptyArrayImeta("int32s_0")},
+		{"Int32s_1", args{"int32s_1", ([]int32)(nil)}, emptyArrayImeta("int32s_1")},
 		{"Int32s_2", args{"int32s_2", []int32{1}}, imeta{[]byte("int32s_2"), []byte("[1]"), false}},
 		{"Int32s_3", args{"int32s_3", []int32{1, -2, 3}}, imeta{[]byte("int32s_3"), []byte("[1,-2,3]"), false}},
 
-		{"Int64s_0", args{"int64s_0", []int64{}}, imeta{[]byte("int64s_0"), []byte("[]"), false}},
-		{"Int64s_1", args{"int64s_1", ([]int64)(nil)}, imeta{[]byte("int64s_1"), []byte("[]"), false}},
+		{"Int64s_0", args{"int64s_0", []int64{}}, emptyArrayImeta("int64s_0")},
+		{"Int64s_1", args{"int64s_1", ([]int64)(nil)}, emptyArrayImeta("int64s_1")},
 		{"Int64s_2", args{"int64s_2", []int64{1}}, imeta{[]byte("int64s_2"), []byte("[1]"), false}},
 		{"Int64s_3", args{"int64s_3", []int64{1, -2, 3}}, imeta{[]byte("int64s_3"), []byte("[1,-2,3]"), false}},
 
 		// uints*
-		{"Uints_0", args{"uints_0", []uint{}}, imeta{[]byte("uints_0"), []byte("[]"), false}},
-		{"Uints_1", args{"uints_1", ([]uint)(nil)}, imeta{[]byte("uints_1"), []byte("[]"), false}},
+		{"Uints_0", args{"uints_0", []uint{}}, emptyArrayImeta("uints_0")},
+		{"Uints_1", args{"uints_1", ([]uint)(nil)}, emptyArrayImeta("uints_1")},
 		{"Uints_2", args{"uints_2", []uint{1}}, imeta{[]byte("uints_2"), []byte("[1]"), false}},
 		{"Uints_3", args{"uints_3", []uint{1, 2, 3}}, imeta{[]byte("uints_3"), []byte("[1,2,3]"), false}},
 
-		{"Uint8s_0", args{"uint8s_0", []uint8{}}, imeta{[]byte("uint8s_0"), []byte("[]"), false}},
-		{"Uint8s_1", args{"uint8s_1", ([]uint8)(nil)}, imeta{[]byte("uint8s_1"), []byte("[]"), false}},
+		{"Uint8s_0", args{"uint8s_0", []uint8{}}, emptyArrayImeta("uint8s_0")},
+		{"Uint8s_1", args{"uint8s_1", ([]uint8)(nil)}, emptyArrayImeta("uint8s_1")},
 		{"Uint8s_2", args{"uint8s_2", []uint8{1}}, imeta{[]byte("uint8s_2"), []byte("[1]"), false}},
 		{"Uint8s_3", args{"uint8s_3", []uint8{1, 2, 3}}, imeta{[]byte("uint8s_3"), []byte("[1,2,3]"), false}},
 
-		{"Uint16s_0", args{"uint16s_0", []uint16{}}, imeta{[]byte("uint16s_0"), []byte("[]"), false}},
-		{"Uint16s_1", args{"uint16s_1", ([]uint16)(nil)}, imeta{[]byte("uint16s_1"), []byte("[]"), false}},
+		{"Uint16s_0", args{"uint16s_0", []uint16{}}, emptyArrayImeta("uint16s_0")},
+		{"Uint16s_1", args{"uint16s_1", ([]uint16)(nil)}, emptyArrayImeta("uint16s_1")},
 		{"Uint16s_2", args{"uint16s_2", []uint16{1}}, imeta{[]byte("uint16s_2"), []byte("[1]"), false}},
 		{"Uint16s_3", args{"uint16s_3", []uint16{1, 2, 3}}, imeta{[]byte("uint16s_3"), []byte("[1,2,3]"), false}},
 
-		{"Uint32s_0", args{"uint32s_0", []uint32{}}, imeta{[]byte("uint32s_0"), []byte("[]"), false}},
-		{"Uint32s_1", args{"uint32s_1", ([]uint32)(nil)}, imeta{[]byte("uint32s_1"), []byte("[]"), false}},
+		{"Uint32s_0", args{"uint32s_0", []uint32{}}, emptyArrayImeta("uint32s_0")},
+		{"Uint32s_1", args{"uint32s_1", ([]uint32)(nil)}, emptyArrayImeta("uint32s_1")},
 		{"Uint32s_2", args{"uint32s_2", []uint32{1}}, imeta{[]byte("uint32s_2"), []byte("[1]"), false}},
 		{"Uint32s_3", args{"uint32s_3", []uint32{1, 2, 3}}, imeta{[]byte("uint32s_3"), []byte("[1,2,3]"), false}},
 
-		{"Uint64s_0", args{"uint64s_0", []uint64{}}, imeta{[]byte("uint64s_0"), []byte("[]"), false}},
-		{"Uint64s_1", args{"uint64s_1", ([]uint64)(nil)}, imeta{[]byte("uint64s_1"), []byte("[]"), false}},
+		{"Uint64s_0", args{"uint64s_0", []uint64{}}, emptyArrayImeta("uint64s_0")},
+		{"Uint64s_1", args{"uint64s_1", ([]uint64)(nil)}, emptyArrayImeta("uint64s_1")},
 		{"Uint64s_2", args{"uint64s_2", []uint64{1}}, imeta{[]byte("uint64s_2"), []byte("[1]"), false}},
 		{"Uint64s_3", args{"uint64s_3", []uint64{1, 2, 3}}, imeta{[]byte("uint64s_3"), []byte("[1,2,3]"), false}},
 
 		// []string
-		{"Strings_0", args{"string_0", ([]string)(nil)}, imeta{[]byte("string_0"), []byte("[]"), false}},
-		{"Strings_1", args{"string_1", []string{}}, imeta{[]byte("string_1"), []byte("[]"), false}},
+		{"Strings_0", args{"string_0", ([]string)(nil)}, emptyArrayImeta("string_0")},
+		{"Strings_1", args{"string_1", []string{}}, emptyArrayImeta("string_1")},
 		{"Strings_2", args{"string_2", []string{"abc"}}, imeta{[]byte("string_2"), []byte(`["abc"]`), false}},
 		{"Strings_3", args{"string_3", []string{"中文", "abc"}}, imeta{[]byte("string_3"), []byte(`["中文","abc"]`), false}},
 
 		// *[]string
-		{"*Strings_0", args{"string_0", (*[]string)(nil)}, imeta{[]byte("string_0"), []byte("null"), false}},
-		{"*Strings_1", args{"string_1", &[]string{}}, imeta{[]byte("string_1"), []byte("[]"), false}},
+		{"*Strings_0", args{"string_0", (*[]string)(nil)}, nullImeta("string_0")},
+		{"*Strings_1", args{"string_1", &[]string{}}, emptyArrayImeta("string_1")},
 		{"*Strings_2", args{"string_2", &[]string{"abc"}}, imeta{[]byte("string_2"), []byte(`["abc"]`), false}},
 		{"*Strings_3", args{"string_3", &[]string{"中文", "abc"}}, imeta{[]byte("string_3"), []byte(`["中文","abc"]`), false}},
 
 		// []*string
-		{"Strings_*0", args{"string_0", ([]*string)(nil)}, imeta{[]byte("string_0"), []byte("[]"), false}},
-		{"Strings_*1", args{"string_1", []*string{}}, imeta{[]byte("string_1"), []byte("[]"), false}},
+		{"Strings_*0", args{"string_0", ([]*string)(nil)}, emptyArrayImeta("string_0")},
+		{"Strings_*1", args{"string_1", []*string{}}, emptyArrayImeta("string_1")},
 		{"Strings_*2", args{"string_2", []*string{&str}}, imeta{[]byte("string_2"), []byte(`["str"]`), false}},
 		{"Strings_*3", args{"string_3", []*string{&str, &str2}}, imeta{[]byte("string_3"), []byte(`["str","str2"]`), false}},
 
 		// []bool
-		{"Bools_nil", args{"bool_nil", ([]bool)(nil)}, imeta{[]byte("bool_nil"), []byte("[]"), false}},
-		{"Bools_empty", args{"bool_empty", []bool{}}, imeta{[]byte("bool_empty"), []byte("[]"), false}},
+		{"Bools_nil", args{"bool_nil", ([]bool)(nil)}, emptyArrayImeta("bool_nil")},
+		{"Bools_empty", args{"bool_empty", []bool{}}, emptyArrayImeta("bool_empty")},
 		{"Bools_true", args{"bool_true", []bool{true}}, imeta{[]byte("bool_true"), []byte("[true]"), false}},
 		{"Bools_false", args{"bool_false", []bool{false}}, imeta{[]byte("bool_false"), []byte("[false]"), false}},
 		{"Bools_mixed", args{"bool_mixed", []bool{true, false, true, true}}, imeta{[]byte("bool_mixed"), []byte("[true,false,true,true]"), false}},
 
 		// *[]bool
-		{"*Bools_nil", args{"bool_nil", (*[]bool)(nil)}, imeta{[]byte("bool_nil"), []byte("null"), false}},
-		{"*Bools_empty", args{"bool_empty", &[]bool{}}, imeta{[]byte("bool_empty"), []byte("[]"), false}},
+		{"*Bools_nil", args{"bool_nil", (*[]bool)(nil)}, nullImeta("bool_nil")},
+		{"*Bools_empty", args{"bool_empty", &[]bool{}}, emptyArrayImeta("bool_empty")},
 		{"*Bools_true", args{"bool_true", &[]bool{true}}, imeta{[]byte("bool_true"), []byte("[true]"), false}},
 		{"*Bools_false", args{"bool_false", &[]bool{false}}, imeta{[]byte("bool_false"), []byte("[false]"), false}},
 		{"*Bools_mixed", args{"bool_mixed", &[]bool{true, false, true, true}}, imeta{[]byte("bool_mixed"), []byte("[true,false,true,true]"), false}},
 
 		// []*bool
-		{"Bools_*nil", args{"bool_nil", ([]*bool)(nil)}, imeta{[]byte("bool_nil"), []byte("[]"), false}},
-		{"Bools_*empty", args{"bool_empty", []*bool{}}, imeta{[]byte("bool_empty"), []byte("[]"), false}},
+		{"Bools_*nil", args{"bool_nil", ([]*bool)(nil)}, emptyArrayImeta("bool_nil")},
+		{"Bools_*empty", args{"bool_empty", []*bool{}}, emptyArrayImeta("bool_empty")},
 		{"Bools_*true", args{"bool_true", []*bool{&b1}}, imeta{[]byte("bool_true"), []byte("[true]"), false}},
 		{"Bools_*false", args{"bool_false", []*bool{&bo}}, imeta{[]byte("bool_false"), []byte("[false]"), false}},
 		{"Bools_*mixed", args{"bool_mixed", []*bool{&b1, &bo, &b1, &b1}}, imeta{[]byte("bool_mixed"), []byte("[true,false,true,true]"), false}},
 
 		// floats*
-		{"Float32s_0", args{"float32s_0", []float32{}}, imeta{[]byte("float32s_0"), []byte("[]"), false}},
-		{"Float32s_1", args{"float32s_1", ([]float32)(nil)}, imeta{[]byte("float32s_1"), []byte("[]"), false}},
+		{"Float32s_0", args{"float32s_0", []float32{}}, emptyArrayImeta("float32s_0")},
+		{"Float32s_1", args{"float32s_1", ([]float32)(nil)}, emptyArrayImeta("float32s_1")},
 		{"Float32s_2", args{"float32s_2", []float32{1}}, imeta{[]byte("float32s_2"), []byte("[1]"), false}},
 		{"Float32s_3", args{"float32s_3", []float32{1, -2, 3, 4.0, 5.01, 0}}, imeta{[]byte("float32s_3"), []byte("[1,-2,3,4,5.01,0]"), false}},
 
-		{"Float64s_0", args{"float64s_0", []float64{}}, imeta{[]byte("float64s_0"), []byte("[]"), false}},
-		{"Float64s_1", args{"float64s_1", ([]float64)(nil)}, imeta{[]byte("float64s_1"), []byte("[]"), false}},
+		{"Float64s_0", args{"float64s_0", []float64{}}, emptyArrayImeta("float64s_0")},
+		{"Float64s_1", args{"float64s_1", ([]float64)(nil)}, emptyArrayImeta("float64s_1")},
 		{"Float64s_2", args{"float64s_2", []float64{1}}, imeta{[]byte("float64s_2"), []byte("[1]"), false}},
 		{"Float64s_3", args{"float64s_3", []float64{1, -2, 3, 4.0, 5.01, 0}}, imeta{[]byte("float64s_3"), []byte("[1,-2,3,4,5.01,0]"), false}},
 
 		// any []interface{}
-		{"Any_nil", args{"any_nil", ([]interface{})(nil)}, imeta{[]byte("any_nil"), []byte("[]"), false}},
-		{"Any_empty", args{"any_empty", []interface{}{}}, imeta{[]byte("any_empty"), []byte("[]"), false}},
+		{"Any_nil", args{"any_nil", ([]interface{})(nil)}, emptyArrayImeta("any_nil")},
+		{"Any_bytes_empty", args{"any_bytes_empty", ([]byte)(nil)}, emptyArrayImeta("any_bytes_empty")},
+		{"Any_empty", args{"any_empty", []interface{}{}}, emptyArrayImeta("any_empty")},
 		{"Any_map", args{"any_map", []interface{}{anyMap{"name": "tanzy"}}},
 			imeta{[]byte("any_map"), []byte(`[{"name":"tanzy"}]`), false}},
 		{"Any_*map", args{"any_*map", []interface{}{&anyMap{"name": "tanzy"}}},
@@ -265,8 +266,37 @@ func TestAny(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Any(tt.args.key, tt.args.any); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Actual =%s,%s\n, want %s,%s", got.Key(), got.Value(), tt.want.Key(), tt.want.Value())
-				t.Errorf("Actual = %v, want %v", got, tt.want)
+				t.Errorf("Actual = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
+}
+
+var testM = map[string]interface{}{"name": "zyan", "age": 18, "flag": true,
+	"map": map[string]int{"idx": 2, "idy": 3}, "ints": []int{}}
+
+type TestAnyStruct struct {
+	Name    string
+	Age     int32
+	IP      string
+	Other   map[string]interface{}
+	Flag    bool
+	Address string
+	Sex     int
+	Income  float32
+	Pets    []string
+	Extra   []interface{}
+}
+
+var testAnyStruct = TestAnyStruct{
+	Name:    "Pallo",
+	Age:     19,
+	IP:      "10.0.0.1",
+	Other:   testM,
+	Flag:    true,
+	Address: "XXX City XXX County XXX Block XXX Unit XXX",
+	Extra:   []interface{}{1, "str", false, 3.2, []string{"hello", "world"}},
+	Sex:     1,
+	Income:  19.05,
+	Pets:    []string{"Dog", "Cat", "Rabbit"},
 }
