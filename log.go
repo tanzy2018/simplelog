@@ -35,7 +35,6 @@ type Log struct {
 	syncBuf     *syncBuffer
 	recordBuf   *recordBuffer
 	alock       int32
-	tk          *time.Ticker
 	lo          *sync.Mutex
 	nopClose    bool
 }
@@ -203,7 +202,7 @@ func (l *Log) orChangeFileWriter() {
 
 func (l *Log) write(level LevelType, msg string, md ...encode.Meta) {
 	sync := l.syncBuf.write(l.recordBuf.write(level, msg, md))
-	if l.op.writeDirect || sync {
+	if l.op.syncDirect || sync {
 		l.lock()
 		defer l.unlock()
 		l.sync()
@@ -253,13 +252,12 @@ func (l *Log) close() error {
 }
 
 func (l *Log) backendSync() {
-	l.tk = time.NewTicker(l.op.syncInterval)
 	go func() {
 		for {
-			if l.op.writeDirect {
+			time.Sleep(l.op.syncInterval)
+			if l.op.syncDirect {
 				continue
 			}
-			time.Sleep(l.op.syncInterval)
 			l.lock()
 			l.sync()
 			l.unlock()

@@ -41,7 +41,7 @@ func BenchmarkSimpleLog(b *testing.B) {
 	// runtime.GOMAXPROCS(1)
 	var newLog *Log
 	newLog = New(
-		WithWriteDirect(false),
+		WithSyncDirect(false),
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
 		WithMaxFileSize(1024*1024*1024)).

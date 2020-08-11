@@ -4,8 +4,7 @@ package simplelog
 type LevelType int32
 
 const (
-	// NOLEVEL ...
-	NOLEVEL LevelType = iota
+	_ LevelType = iota
 	// DEBUG ...
 	DEBUG
 	// INFO ...
@@ -18,6 +17,8 @@ const (
 	PANIC
 	// FATAL ...
 	FATAL
+	// NOLEVEL ...
+	NOLEVEL
 )
 
 // Level field name.
@@ -54,4 +55,11 @@ func (level LevelType) String() string {
 		return FatalLevelName
 	}
 	return NoLevelName
+}
+
+func (level LevelType) isValid() bool {
+	if level < DEBUG || level > NOLEVEL {
+		return false
+	}
+	return true
 }

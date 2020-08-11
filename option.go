@@ -19,7 +19,7 @@ func _defaultOPtion() *options {
 		maxFileSize:    1024 * 1024 * 1024,
 		maxSyncBufSize: 1024 * 1024,
 		maxRecordSize:  1024 * 1024,
-		writeDirect:    true,
+		syncDirect:     true,
 		syncInterval:   time.Second * 1,
 		hook:           new(hook),
 		errHandler: func(err error) {
@@ -42,7 +42,7 @@ type options struct {
 	maxSyncBufSize int
 	maxFileSize    int64
 	maxRecordSize  int
-	writeDirect    bool
+	syncDirect     bool
 	cTime          int64
 	syncInterval   time.Duration
 	hook           IHook
@@ -125,9 +125,11 @@ func WithMaxRecordSize(size int) Option {
 }
 
 // WithLevel ...
-func WithLevel(level int32) Option {
+func WithLevel(level LevelType) Option {
 	return func(op *options) {
-		op.level = level
+		if level.isValid() {
+			op.level = int32(level)
+		}
 	}
 }
 
@@ -138,10 +140,10 @@ func WithHook(hook IHook) Option {
 	}
 }
 
-// WithWriteDirect ...
-func WithWriteDirect(writeDirect bool) Option {
+// WithSyncDirect ...
+func WithSyncDirect(syncDirect bool) Option {
 	return func(op *options) {
-		op.writeDirect = writeDirect
+		op.syncDirect = syncDirect
 	}
 }
 
