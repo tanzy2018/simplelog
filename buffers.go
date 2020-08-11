@@ -2,7 +2,7 @@ package simplelog
 
 import (
 	"bytes"
-	"sync/atomic"
+	"sync"
 
 	"github.com/tanzy2018/simplelog/encode"
 	"github.com/tanzy2018/simplelog/internal"
@@ -13,6 +13,7 @@ type syncBuffer struct {
 	c       int32
 	maxSize int
 	l       *Log
+	lo      *sync.Mutex
 }
 
 func newSyncBuffers(l *Log, maxSize int) *syncBuffer {
@@ -20,25 +21,17 @@ func newSyncBuffers(l *Log, maxSize int) *syncBuffer {
 		maxSize: maxSize,
 		buf:     &bytes.Buffer{},
 		l:       l,
+		lo:      new(sync.Mutex),
 	}
-	atomic.StoreInt32(&sb.c, 0)
 	return sb
 }
 
 func (sb *syncBuffer) lock() {
-	for {
-		if atomic.CompareAndSwapInt32(&sb.c, 0, 1) {
-			return
-		}
-	}
+	sb.lo.Lock()
 }
 
 func (sb *syncBuffer) unlock() {
-	for {
-		if atomic.CompareAndSwapInt32(&sb.c, 1, 0) {
-			return
-		}
-	}
+	sb.lo.Unlock()
 }
 
 func (sb *syncBuffer) write(b []byte) (sync bool) {
@@ -62,6 +55,7 @@ type recordBuffer struct {
 	c       int32
 	maxSize int
 	l       *Log
+	lo      *sync.Mutex
 }
 
 func newRecordBuffers(l *Log, maxSize int) *recordBuffer {
@@ -69,26 +63,18 @@ func newRecordBuffers(l *Log, maxSize int) *recordBuffer {
 		maxSize: maxSize,
 		buf:     &bytes.Buffer{},
 		l:       l,
+		lo:      new(sync.Mutex),
 	}
-	atomic.StoreInt32(&rb.c, 0)
 	return rb
 }
 
 func (rb *recordBuffer) lock() {
-	for {
-		if atomic.CompareAndSwapInt32(&rb.c, 0, 1) {
-			return
-		}
-	}
+	rb.lo.Lock()
 }
 
 func (rb *recordBuffer) unlock() {
-	for {
-		if atomic.CompareAndSwapInt32(&rb.c, 1, 0) {
-			rb.buf.Reset()
-			return
-		}
-	}
+	rb.buf.Reset()
+	rb.lo.Unlock()
 }
 
 func (rb *recordBuffer) write(level LevelType, msg string, md []encode.Meta) []byte {

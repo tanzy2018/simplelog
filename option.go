@@ -18,7 +18,7 @@ func _defaultOPtion() *options {
 		level:          int32(DEBUG),
 		maxFileSize:    1024 * 1024 * 1024,
 		maxSyncBufSize: 1024 * 1024,
-		maxRecordSize:  1024 * 1024,
+		maxRecordSize:  1024 * 10,
 		syncDirect:     true,
 		syncInterval:   time.Second * 1,
 		hook:           new(hook),

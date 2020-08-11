@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -34,7 +33,6 @@ type Log struct {
 	autoReName  bool
 	syncBuf     *syncBuffer
 	recordBuf   *recordBuffer
-	alock       int32
 	lo          *sync.Mutex
 	nopClose    bool
 }
@@ -50,7 +48,6 @@ func New(ops ...Option) *Log {
 	l.syncBuf = newSyncBuffers(l, l.op.maxSyncBufSize)
 	l.recordBuf = newRecordBuffers(l, l.op.maxRecordSize)
 	l.lo = new(sync.Mutex)
-	atomic.StoreInt32(&l.alock, 0)
 	l.wc = os.Stdout
 	l.nopClose = true
 	l.backendSync()
@@ -127,7 +124,7 @@ func (l *Log) Hook(hfs ...HookFunc) {
 // Sync ...
 func (l *Log) Sync() {
 	l.lock()
-	l.unlock()
+	defer l.unlock()
 	l.sync()
 	l.close()
 }
@@ -178,7 +175,6 @@ func (l *Log) sync() {
 	l.curFileSize += int64(len(b))
 	l.wc.Write(b)
 	l.orChangeFileWriter()
-
 }
 
 func (l *Log) orChangeFileWriter() {
@@ -190,11 +186,8 @@ func (l *Log) orChangeFileWriter() {
 	}
 
 	l.errHandle(
-		// close
 		l.close(),
-		// rename
 		os.Rename(l.op.fullPath(), l.op.rename()),
-		// open
 		l.newWriterCloserFromFile(),
 	)
 
