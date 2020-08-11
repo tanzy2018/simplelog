@@ -43,7 +43,17 @@ var (
 	MsgFieldName = "msg"
 	// StackFieldName ...
 	StackFieldName = "stack"
+	// ErrFieldName ...
+	ErrFieldName = "err"
 )
+
+// Err ...
+func Err(err error) encode.Meta {
+	if err == nil {
+		return encode.EmptyStrMeta(ErrFieldName)
+	}
+	return encode.String(ErrFieldName, err.Error())
+}
 
 func timeMeta() encode.Meta {
 	if TimeFieldFormat == TimestampUnixFormat {

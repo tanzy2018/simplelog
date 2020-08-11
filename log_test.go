@@ -1,11 +1,13 @@
 package simplelog
 
 import (
-	"github.com/tanzy2018/simplelog/encode"
-	"github.com/tanzy2018/simplelog/internal"
+	"errors"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 var once sync.Once
@@ -30,7 +32,7 @@ func TestSimpleLog(t *testing.T) {
 	newLog.Debug("你好中国", encode.Int("uid", 11))
 	newLog.Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))
 	newLog.Warn("warnmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
-	newLog.Error("errmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
+	newLog.Error("errmsg", encode.Int("uid", 13), Err(errors.New("a error")), encode.String("detail", "xxxxwarn...."))
 	newLog.Panic("panicmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
 	// newLog.Fatal("fatalmsg", encode.Int("uid", 13), encode.String("detail", "xxxxwarn...."))
 }

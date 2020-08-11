@@ -86,6 +86,11 @@ func (e emptyStrImeta) IsNil() bool {
 	return false
 }
 
+// EmptyStrMeta ..
+func EmptyStrMeta(key string) Meta {
+	return emptyStrImeta(key)
+}
+
 // Int ...
 func Int(key string, val int) Meta {
 	return Int64(key, int64(val))
