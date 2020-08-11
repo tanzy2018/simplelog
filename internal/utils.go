@@ -13,6 +13,8 @@ const deFaultTimeFormat = "2006-01-02 15:04:05"
 
 const utilsRandStr = "23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
 
+const utilsHexStr = "0123456789abcdef"
+
 var utilsRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // TimeFormat ...
@@ -51,18 +53,27 @@ func RandInt(n int) int {
 func RandomString(n int) string {
 	out := make([]byte, 0, n)
 	for l := len(utilsRandStr); n > l; {
-		out = append(out, randomString(l)...)
+		out = append(out, randomString(l, utilsRandStr)...)
 		n -= len(utilsRandStr)
 	}
-	out = append(out, randomString(n)...)
-	return ToString(out)
+	return ToString(append(out, randomString(n, utilsRandStr)...))
 }
 
-func randomString(n int) []byte {
-	if n <= 0 {
+// RandomHex ...
+func RandomHex(n int) string {
+	out := make([]byte, 0, n)
+	for l := len(utilsHexStr); n > l; {
+		out = append(out, randomString(l, utilsHexStr)...)
+		n -= len(utilsHexStr)
+	}
+	return ToString(append(out, randomString(n, utilsHexStr)...))
+}
+
+func randomString(n int, seed string) []byte {
+	if n <= 0 || len(seed) == 0 {
 		return nil
 	}
-	tpl := []byte(utilsRandStr)
+	tpl := []byte(seed)
 
 	for i := 0; i < len(tpl)/2; i++ {
 		idx := utilsRand.Intn(len(tpl) - i)

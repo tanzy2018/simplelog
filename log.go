@@ -1,12 +1,13 @@
 package simplelog
 
 import (
-	"github.com/tanzy2018/simplelog/encode"
-	"github.com/tanzy2018/simplelog/internal"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/tanzy2018/simplelog/encode"
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 // Logger ...

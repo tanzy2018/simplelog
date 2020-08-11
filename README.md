@@ -35,7 +35,7 @@ func main() {
     
   ```
 
-  - 使用文件输出
+- 使用文件输出
 ```go
 package main
 
@@ -84,6 +84,46 @@ func main() {
 /*
 {"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,false,true,false],"name":"Tom"}
 {"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,false,true,false],"name":"Jeiry","say":2}
+*/
+
+```
+- 自动设置日志文件大小
+```go
+
+package main
+
+import (
+	"strings"
+
+	"github.com/tanzy2018/simplelog"
+	"github.com/tanzy2018/simplelog/encode"
+)
+
+func main() {
+	simplelog.TimeFieldFormat = simplelog.TimestampUnixMilliFormat
+	newLog := simplelog.New(
+		simplelog.WithSyncDirect(false),
+		// each file with size 1M
+		simplelog.WithMaxFileSize(1024*1024*1),
+	)
+	newLog.WithFileWriter(".", "data", "demo.log")
+	defer newLog.Sync()
+	oneKBStr := strings.Repeat("01234567890", 100)
+	// At last, it will generate three *.log in ./data/
+	for i := 0; i < 2000; i++ {
+		newLog.Info("infomsg", encode.String("1kb_str", oneKBStr))
+	}
+}
+/*
+
+# ls ./data
+───┬──────────────────────────────────────────┬──────┬──────────┬────────────
+ # │ name                                     │ type │ size     │ modified   
+───┼──────────────────────────────────────────┼──────┼──────────┼────────────
+ 0 │ data/demo.1597163700_1597163700_0198.log │ File │   1.0 MB │ 2 secs ago 
+ 1 │ data/demo.1597163700_1597163700_0b2e.log │ File │   1.0 MB │ 2 secs ago 
+ 2 │ data/demo.log                            │ File │ 260.8 KB │ 2 secs ago 
+───┴──────────────────────────────────────────┴──────┴──────────┴────────────
 */
 
 ```

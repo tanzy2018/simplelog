@@ -64,12 +64,13 @@ func (op *options) rename() string {
 	base := path.Base(op.fname)
 	ext := path.Ext(base)
 	subfix := genRenameSubfix(op.cTime, time.Now().Unix())
-	newName := make([]byte, 0, len(full))
-	newName = append(newName, []byte(full)[:len(full)-len(base)]...)
-	newName = append(newName, []byte(base)[:len(base)-len(ext)]...)
-	newName = append(newName, []byte(subfix)...)
+
+	newName := make([]byte, 0, 1+len(full)+len(subfix))
+	newName = append(newName, full[:len(full)-len(base)]...)
+	newName = append(newName, base[:len(base)-len(ext)]...)
+	newName = append(newName, subfix...)
 	if len(ext) > 0 {
-		newName = append(newName, []byte(ext)...)
+		newName = append(newName, ext...)
 	}
 	return internal.ToString(newName)
 }

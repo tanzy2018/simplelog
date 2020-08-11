@@ -26,8 +26,8 @@ const (
 	TimestampUnixMicroFormat = "unixmicro"
 	// TimestampUnixNanoFormat ...
 	TimestampUnixNanoFormat = "unixnano"
-	// .createTime_lastmodifiedTime
-	renameFormat = ".%v_%v"
+	// .createTime_lastmodifiedTime_randomeStr
+	renameFormat = ".%v_%v_%s"
 )
 
 var (
@@ -98,5 +98,5 @@ func genRenameSubfix(csec, msec int64) string {
 		v0, v1 = t0.Format(TimeFieldFormat), t1.Format(TimeFieldFormat)
 
 	}
-	return fmt.Sprintf(renameFormat, v0, v1)
+	return fmt.Sprintf(renameFormat, v0, v1, internal.RandomHex(4))
 }
