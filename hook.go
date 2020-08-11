@@ -4,8 +4,6 @@ import (
 	"github.com/tanzy2018/simplelog/encode"
 )
 
-var globalHooks = new(hook)
-
 // HookFunc ...
 type HookFunc func() encode.Meta
 
@@ -37,14 +35,4 @@ func (h *hook) Hooks() []encode.Meta {
 		md = append(md, hf())
 	}
 	return md
-}
-
-// AddHooks ...
-func AddHooks(hfs ...HookFunc) {
-	globalHooks.Add(hfs...)
-}
-
-// Hooks ...
-func Hooks() []encode.Meta {
-	return globalHooks.Hooks()
 }

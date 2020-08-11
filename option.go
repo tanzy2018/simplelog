@@ -19,13 +19,11 @@ func _defaultOPtion() *options {
 		maxFileSize:    1024 * 1024 * 1024,
 		maxSyncBufSize: 1024 * 1024,
 		maxRecordSize:  1024 * 1024,
-		writeDirect:    false,
-		syncBufsLen:    10,
-		recordBufsLen:  10,
-		syncInterval:   time.Millisecond * 100,
+		writeDirect:    true,
+		syncInterval:   time.Second * 1,
 		hook:           new(hook),
 		errHandler: func(err error) {
-			fmt.Fprintf(os.Stderr, "log op err:%v\n", err)
+			fmt.Fprintf(os.Stderr, "log err:%v\n", err)
 		},
 	}
 }
@@ -44,8 +42,6 @@ type options struct {
 	maxSyncBufSize int
 	maxFileSize    int64
 	maxRecordSize  int
-	syncBufsLen    int
-	recordBufsLen  int
 	writeDirect    bool
 	cTime          int64
 	syncInterval   time.Duration
@@ -139,20 +135,6 @@ func WithLevel(level int32) Option {
 func WithHook(hook IHook) Option {
 	return func(op *options) {
 		op.hook = hook
-	}
-}
-
-// WithSyncBufsLen ...
-func WithSyncBufsLen(syncBufsLen int) Option {
-	return func(op *options) {
-		op.syncBufsLen = syncBufsLen
-	}
-}
-
-// WithRecordBufsLen ...
-func WithRecordBufsLen(recordBufsLen int) Option {
-	return func(op *options) {
-		op.recordBufsLen = recordBufsLen
 	}
 }
 

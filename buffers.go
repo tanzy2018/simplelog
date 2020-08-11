@@ -9,27 +9,20 @@ import (
 )
 
 type syncBuffer struct {
-	buf    *bytes.Buffer
-	c      int32
-	maxLen int
-	l      *Log
+	buf     *bytes.Buffer
+	c       int32
+	maxSize int
+	l       *Log
 }
 
-func newSyncBuffers(l *Log, maxLen int, num int) []*syncBuffer {
-	if num < 0 || num > 1024 {
-		num = 10
+func newSyncBuffers(l *Log, maxSize int) *syncBuffer {
+	sb := &syncBuffer{
+		maxSize: maxSize,
+		buf:     &bytes.Buffer{},
+		l:       l,
 	}
-	bufs := make([]*syncBuffer, num)
-	for i := range bufs {
-		sb := &syncBuffer{
-			maxLen: maxLen,
-			buf:    &bytes.Buffer{},
-			l:      l,
-		}
-		atomic.StoreInt32(&sb.c, 0)
-		bufs[i] = sb
-	}
-	return bufs
+	atomic.StoreInt32(&sb.c, 0)
+	return sb
 }
 
 func (sb *syncBuffer) lock() {
@@ -53,7 +46,7 @@ func (sb *syncBuffer) write(b []byte) (sync bool) {
 	defer sb.unlock()
 	sb.buf.Grow(len(b))
 	sb.buf.WriteString(internal.ToString(b))
-	return sb.buf.Len() >= sb.maxLen
+	return sb.buf.Len() >= sb.maxSize
 }
 
 func (sb *syncBuffer) flushAsBytes() []byte {
@@ -64,53 +57,45 @@ func (sb *syncBuffer) flushAsBytes() []byte {
 	return b
 }
 
-type oneRecordBuffer struct {
-	buf    *bytes.Buffer
-	c      int32
-	maxLen int
-	l      *Log
+type recordBuffer struct {
+	buf     *bytes.Buffer
+	c       int32
+	maxSize int
+	l       *Log
 }
 
-func newOneRecordBuffers(l *Log, maxLen int, num int) []*oneRecordBuffer {
-	if num < 0 || num > 1024 {
-		num = 10
+func newRecordBuffers(l *Log, maxSize int) *recordBuffer {
+	rb := &recordBuffer{
+		maxSize: maxSize,
+		buf:     &bytes.Buffer{},
+		l:       l,
 	}
-
-	bufs := make([]*oneRecordBuffer, num)
-	for i := range bufs {
-		ob := &oneRecordBuffer{
-			maxLen: maxLen,
-			buf:    &bytes.Buffer{},
-			l:      l,
-		}
-		atomic.StoreInt32(&ob.c, 0)
-		bufs[i] = ob
-	}
-
-	return bufs
+	atomic.StoreInt32(&rb.c, 0)
+	return rb
 }
 
-func (ob *oneRecordBuffer) lock() {
+func (rb *recordBuffer) lock() {
 	for {
-		if atomic.CompareAndSwapInt32(&ob.c, 0, 1) {
+		if atomic.CompareAndSwapInt32(&rb.c, 0, 1) {
 			return
 		}
 	}
 }
 
-func (ob *oneRecordBuffer) unlock() {
+func (rb *recordBuffer) unlock() {
 	for {
-		if atomic.CompareAndSwapInt32(&ob.c, 1, 0) {
+		if atomic.CompareAndSwapInt32(&rb.c, 1, 0) {
+			rb.buf.Reset()
 			return
 		}
 	}
 }
 
-func (ob *oneRecordBuffer) write(level LevelType, msg string, md []encode.Meta) {
-	ob.lock()
-	defer ob.unlock()
-	ob.buf.Reset()
-	//ob.buf.Grow(ob.maxLen)
+func (rb *recordBuffer) write(level LevelType, msg string, md []encode.Meta) []byte {
+	rb.lock()
+	defer rb.unlock()
+	rb.buf.Reset()
+	//rb.buf.Grow(rb.maxSize)
 	md0 := make([]encode.Meta, 0, 3)
 	if EnableTimeField {
 		md0 = append(md0, timeMeta())
@@ -118,101 +103,95 @@ func (ob *oneRecordBuffer) write(level LevelType, msg string, md []encode.Meta) 
 	md0 = append(md0,
 		levelMeta(level),
 		msgMeta(msg))
-	md0 = append(md0, globalHooks.Hooks()...)
-	md0 = append(md0, ob.l.op.hook.Hooks()...)
+	md0 = append(md0, rb.l.op.hook.Hooks()...)
 
-	ob.writeLeftDelimiter()
-	ob.writeCommonMeta(md0)
-	ob.writeCustomMeta(md)
+	rb.writeLeftDelimiter()
+	rb.writeCommonMeta(md0)
+	rb.writeCustomMeta(md)
 	if level == PANIC {
-		ob.writeStackMeta()
+		rb.writeStackMeta()
 	}
-	ob.writeRightDelimiter()
-	ob.writeEndDelimiter()
+	rb.writeRightDelimiter()
+	rb.writeEndDelimiter()
+	return rb.buf.Bytes()
 
 }
 
-func (ob *oneRecordBuffer) writeCommonMeta(md []encode.Meta) {
+func (rb *recordBuffer) writeCommonMeta(md []encode.Meta) {
 	for i, msg := range md {
 		if i != 0 {
-			ob.writeFieldDelimiter()
+			rb.writeFieldDelimiter()
 		}
-		ob.writeWrapper()
-		ob.buf.Write(msg.Key())
-		ob.writeWrapper()
-		ob.writeKVDelimiter()
+		rb.writeWrapper()
+		rb.buf.Write(msg.Key())
+		rb.writeWrapper()
+		rb.writeKVDelimiter()
 		if msg.Wrap() {
-			ob.writeWrapper()
+			rb.writeWrapper()
 		}
-		ob.buf.Write(msg.Value())
+		rb.buf.Write(msg.Value())
 		if msg.Wrap() {
-			ob.writeWrapper()
+			rb.writeWrapper()
 		}
 	}
 }
 
-func (ob *oneRecordBuffer) writeCustomMeta(md []encode.Meta) {
+func (rb *recordBuffer) writeCustomMeta(md []encode.Meta) {
 	for _, msg := range md {
-		lg := ob.buf.Len() + len(msg.Key()) + len(msg.Value())
-		if lg >= ob.maxLen {
+		size := rb.buf.Len() + len(msg.Key()) + len(msg.Value())
+		if size >= rb.maxSize {
 			return
 		}
-		ob.writeFieldDelimiter()
-		ob.writeWrapper()
-		ob.buf.Write(msg.Key())
-		ob.writeWrapper()
-		ob.writeKVDelimiter()
+		rb.writeFieldDelimiter()
+		rb.writeWrapper()
+		rb.buf.Write(msg.Key())
+		rb.writeWrapper()
+		rb.writeKVDelimiter()
 		if msg.Wrap() {
-			ob.writeWrapper()
+			rb.writeWrapper()
 		}
-		ob.buf.Write(msg.Value())
+		rb.buf.Write(msg.Value())
 		if msg.Wrap() {
-			ob.writeWrapper()
+			rb.writeWrapper()
 		}
 	}
 }
 
-func (ob *oneRecordBuffer) writeStackMeta() {
+func (rb *recordBuffer) writeStackMeta() {
 	md := stackMeta()
-	ob.writeWrapper()
-	ob.buf.Write(md.Key())
-	ob.writeWrapper()
-	ob.writeKVDelimiter()
+	rb.writeWrapper()
+	rb.buf.Write(md.Key())
+	rb.writeWrapper()
+	rb.writeKVDelimiter()
 	if md.Wrap() {
-		ob.writeWrapper()
+		rb.writeWrapper()
 	}
-	ob.buf.Write(md.Value())
+	rb.buf.Write(md.Value())
 	if md.Wrap() {
-		ob.writeWrapper()
+		rb.writeWrapper()
 	}
 }
 
-func (ob *oneRecordBuffer) writeWrapper() {
-	ob.buf.WriteByte(valueWrapper)
+func (rb *recordBuffer) writeWrapper() {
+	rb.buf.WriteByte(valueWrapper)
 }
 
-func (ob *oneRecordBuffer) writeLeftDelimiter() {
-	ob.buf.WriteByte(leftDelimiter)
+func (rb *recordBuffer) writeLeftDelimiter() {
+	rb.buf.WriteByte(leftDelimiter)
 }
 
-func (ob *oneRecordBuffer) writeRightDelimiter() {
-	ob.buf.WriteByte(rightDelimiter)
+func (rb *recordBuffer) writeRightDelimiter() {
+	rb.buf.WriteByte(rightDelimiter)
 }
 
-func (ob *oneRecordBuffer) writeEndDelimiter() {
-	ob.buf.WriteByte(endDelimiter)
+func (rb *recordBuffer) writeEndDelimiter() {
+	rb.buf.WriteByte(endDelimiter)
 }
 
-func (ob *oneRecordBuffer) writeFieldDelimiter() {
-	ob.buf.WriteByte(fieldDelimiter)
+func (rb *recordBuffer) writeFieldDelimiter() {
+	rb.buf.WriteByte(fieldDelimiter)
 }
 
-func (ob *oneRecordBuffer) writeKVDelimiter() {
-	ob.buf.WriteByte(kvDelimiter)
-}
-
-func (ob *oneRecordBuffer) flushAsBytes() []byte {
-	ob.lock()
-	defer ob.unlock()
-	return ob.buf.Bytes()
+func (rb *recordBuffer) writeKVDelimiter() {
+	rb.buf.WriteByte(kvDelimiter)
 }

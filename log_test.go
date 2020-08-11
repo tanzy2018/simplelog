@@ -11,12 +11,9 @@ import (
 var once sync.Once
 
 func TestSimpleLog(t *testing.T) {
-	newLog := New(
-		WithRecordBufsLen(20),
-		WithSyncBufsLen(20),
-	)
+	newLog := New()
 	defer newLog.Sync()
-	AddHooks(func() encode.Meta {
+	newLog.Hook(func() encode.Meta {
 		return encode.Int("socore", internal.RandInt(100))
 	})
 
@@ -42,18 +39,16 @@ func BenchmarkSimpleLog(b *testing.B) {
 	// runtime.GOMAXPROCS(1)
 	var newLog *Log
 	newLog = New(
-		WithRecordBufsLen(10),
-		WithSyncBufsLen(10),
+		WithWriteDirect(false),
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
 		WithMaxFileSize(1024*1024*1024)).
 		WithWriterCloser(Discard, false, true)
-		// WithFileWriter("testdata", "", "simplelog.txt")
+	// WithFileWriter("testdata", "", "simplelog.txt")
 	once.Do(func() {
-
 		TimeFieldFormat = time.StampMilli
 		score := internal.RandInt(100)
-		AddHooks(func() encode.Meta {
+		newLog.Hook(func() encode.Meta {
 			return encode.Int("score", score)
 		})
 

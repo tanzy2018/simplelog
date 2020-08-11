@@ -5,7 +5,6 @@ import (
 	"github.com/tanzy2018/simplelog/internal"
 	"io"
 	"os"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -33,8 +32,8 @@ type Log struct {
 	wc          io.WriteCloser
 	curFileSize int64
 	autoReName  bool
-	syncBufs    []*syncBuffer
-	recordBufs  []*oneRecordBuffer
+	syncBuf     *syncBuffer
+	recordBuf   *recordBuffer
 	alock       int32
 	tk          *time.Ticker
 	lo          *sync.Mutex
@@ -49,8 +48,8 @@ func New(ops ...Option) *Log {
 	for _, f := range ops {
 		f(l.op)
 	}
-	l.syncBufs = newSyncBuffers(l, l.op.maxSyncBufSize, l.op.syncBufsLen)
-	l.recordBufs = newOneRecordBuffers(l, l.op.maxRecordSize, l.op.recordBufsLen)
+	l.syncBuf = newSyncBuffers(l, l.op.maxSyncBufSize)
+	l.recordBuf = newRecordBuffers(l, l.op.maxRecordSize)
 	l.lo = new(sync.Mutex)
 	atomic.StoreInt32(&l.alock, 0)
 	l.wc = os.Stdout
@@ -112,7 +111,7 @@ func (l *Log) Fatal(msg string, md ...encode.Meta) {
 	}
 	l.write(FATAL, msg, md...)
 	l.lock()
-	l.syncAll()
+	l.sync()
 	l.close()
 	l.unlock()
 	os.Exit(-1)
@@ -130,7 +129,7 @@ func (l *Log) Hook(hfs ...HookFunc) {
 func (l *Log) Sync() {
 	l.lock()
 	l.unlock()
-	l.syncAll()
+	l.sync()
 	l.close()
 }
 
@@ -138,7 +137,7 @@ func (l *Log) Sync() {
 func (l *Log) WithWriterCloser(wc io.WriteCloser, needAutoRename, nopClose bool) *Log {
 	l.lock()
 	defer l.unlock()
-	l.syncAll()
+	l.sync()
 	l.close()
 	l.wc = wc
 	l.autoReName = needAutoRename
@@ -150,7 +149,7 @@ func (l *Log) WithWriterCloser(wc io.WriteCloser, needAutoRename, nopClose bool)
 func (l *Log) WithFileWriter(root, topic, fname string) *Log {
 	l.lock()
 	defer l.unlock()
-	l.syncAll()
+	l.sync()
 	l.errHandle(l.close())
 	l.updateFileOption(root, topic, fname)
 	l.errHandle(l.makedir())
@@ -172,8 +171,8 @@ func (l *Log) errHandle(errs ...error) {
 	}
 }
 
-func (l *Log) sync(idx int) {
-	b := l.syncBufs[idx].flushAsBytes()
+func (l *Log) sync() {
+	b := l.syncBuf.flushAsBytes()
 	if len(b) == 0 {
 		return
 	}
@@ -181,18 +180,6 @@ func (l *Log) sync(idx int) {
 	l.wc.Write(b)
 	l.orChangeFileWriter()
 
-}
-
-func (l *Log) syncAll() {
-	for i := 0; i < len(l.syncBufs); i++ {
-		b := l.syncBufs[i].flushAsBytes()
-		if len(b) == 0 {
-			continue
-		}
-		l.curFileSize += int64(len(b))
-		l.wc.Write(b)
-		l.orChangeFileWriter()
-	}
 }
 
 func (l *Log) orChangeFileWriter() {
@@ -215,14 +202,11 @@ func (l *Log) orChangeFileWriter() {
 }
 
 func (l *Log) write(level LevelType, msg string, md ...encode.Meta) {
-	idx := internal.RandInt(l.op.recordBufsLen)
-	idx1 := internal.RandInt(l.op.syncBufsLen)
-	l.recordBufs[idx].write(level, msg, md)
-	sync := l.syncBufs[idx1].write(l.recordBufs[idx].flushAsBytes())
+	sync := l.syncBuf.write(l.recordBuf.write(level, msg, md))
 	if l.op.writeDirect || sync {
 		l.lock()
 		defer l.unlock()
-		l.sync(idx1)
+		l.sync()
 		return
 	}
 
@@ -271,12 +255,13 @@ func (l *Log) close() error {
 func (l *Log) backendSync() {
 	l.tk = time.NewTicker(l.op.syncInterval)
 	go func() {
-		for range l.tk.C {
+		for {
 			if l.op.writeDirect {
 				continue
 			}
+			time.Sleep(l.op.syncInterval)
 			l.lock()
-			l.syncAll()
+			l.sync()
 			l.unlock()
 		}
 	}()
@@ -291,10 +276,17 @@ func (l *Log) unlock() {
 }
 
 func wrapPath(paths ...string) string {
-	path := strings.Join(paths, "/")
-	// `//`is empty fname.
-	if len(path) == 2 {
-		return ""
+	var b []byte
+	isFirst := true
+	for _, p := range paths {
+		if len(p) == 0 {
+			continue
+		}
+		if !isFirst {
+			b = append(b, '/')
+		}
+		isFirst = false
+		b = append(b, p...)
 	}
-	return path
+	return internal.ToString(b)
 }
