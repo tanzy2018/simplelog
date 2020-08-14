@@ -50,9 +50,9 @@ func main() {
 	newLog.Info("profile", encode.String("name", "Tom"), encode.Int("id", 10), encode.Any("flag", false))
 }
 
-// output 
-/*simplelog.txt
-{"time":"2020-08-11 11:00:32","level":"info","msg":"profile","name":"Tom","id":10,"flag":false}
+// 输出 
+/* output.txt
+{"time":"2020-08-14 16:13:09","level":"info","msg":"profile","name":"Tom","id":10,"flag":false}
 */
 
 ```
@@ -79,8 +79,7 @@ func main() {
 	newLog.Info("profile", encode.String("name", "Tom"))
 	newLog.Info("profile", encode.String("name", "Jeiry"), encode.Int("say", 2))
 }
-// output
-
+// 输出
 /*
 {"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,true,false],"name":"Tom"}
 {"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,true,false],"name":"Jeiry","say":2}
