@@ -483,7 +483,7 @@ func Bools(key string, bs []bool) Meta {
 	vals = append(vals, '[')
 	vals = strconv.AppendBool(vals, bs[0])
 	if len(bs) > 1 {
-		for _, b := range bs {
+		for _, b := range bs[1:] {
 			vals = append(vals, ',')
 			vals = strconv.AppendBool(vals, b)
 		}

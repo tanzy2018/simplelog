@@ -82,8 +82,8 @@ func main() {
 // output
 
 /*
-{"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,false,true,false],"name":"Tom"}
-{"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,false,true,false],"name":"Jeiry","say":2}
+{"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,true,false],"name":"Tom"}
+{"time":"2020-08-11 11:13:19","level":"info","msg":"profile","map":{"fruit":["apple","peach"]},"flags":[false,true,false],"name":"Jeiry","say":2}
 */
 
 ```
