@@ -39,22 +39,22 @@ var (
 	FatalLevelName = "fatal"
 )
 
+var levelNames = [...]string{
+	"",
+	DebugLevelName,
+	InfoLevelName,
+	WarnLevelName,
+	ErrFieldName,
+	PanicLevelName,
+	FatalLevelName,
+	NoLevelName,
+}
+
 func (level LevelType) String() string {
-	switch level {
-	case DEBUG:
-		return DebugLevelName
-	case INFO:
-		return InfoLevelName
-	case WARN:
-		return WarnLevelName
-	case ERROR:
-		return ErrorLevelName
-	case PANIC:
-		return PanicLevelName
-	case FATAL:
-		return FatalLevelName
+	if !level.isValid() {
+		return ""
 	}
-	return NoLevelName
+	return levelNames[level]
 }
 
 func (level LevelType) isValid() bool {
