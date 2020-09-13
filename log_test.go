@@ -39,8 +39,8 @@ func TestSimpleLog(t *testing.T) {
 
 func BenchmarkSimpleLog(b *testing.B) {
 	// runtime.GOMAXPROCS(1)
-	var newLog *Log
-	newLog = New(
+	// var newLog *Log
+	newLog := New(
 		WithSyncDirect(false),
 		WithMaxRecordSize(1024*10),
 		WithMaxSyncSize(1024*1024),
@@ -73,7 +73,6 @@ func BenchmarkSimpleLog(b *testing.B) {
 		})
 	})
 	defer newLog.Sync()
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		newLog.Info("infomsg", encode.Int("uid", 12), encode.String("detail", "xxxxinfo...."))

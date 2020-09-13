@@ -272,9 +272,6 @@ func TestAny(t *testing.T) {
 	}
 }
 
-var testM = map[string]interface{}{"name": "zyan", "age": 18, "flag": true,
-	"map": map[string]int{"idx": 2, "idy": 3}, "ints": []int{}}
-
 type TestAnyStruct struct {
 	Name    string
 	Age     int32
@@ -286,17 +283,4 @@ type TestAnyStruct struct {
 	Income  float32
 	Pets    []string
 	Extra   []interface{}
-}
-
-var testAnyStruct = TestAnyStruct{
-	Name:    "Pallo",
-	Age:     19,
-	IP:      "10.0.0.1",
-	Other:   testM,
-	Flag:    true,
-	Address: "XXX City XXX County XXX Block XXX Unit XXX",
-	Extra:   []interface{}{1, "str", false, 3.2, []string{"hello", "world"}},
-	Sex:     1,
-	Income:  19.05,
-	Pets:    []string{"Dog", "Cat", "Rabbit"},
 }

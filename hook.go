@@ -21,9 +21,8 @@ func (h *hook) Add(hfs ...HookFunc) {
 	if len(h.hfs) == 0 {
 		h.hfs = make([]HookFunc, 0, 1)
 	}
-	for _, hf := range hfs {
-		h.hfs = append(h.hfs, hf)
-	}
+
+	h.hfs = append(h.hfs, hfs...)
 }
 
 func (h *hook) Hooks() []encode.Meta {

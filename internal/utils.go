@@ -98,12 +98,11 @@ func CallStack(skip int) string {
 		line int
 		ok   bool
 	)
-	ok = true
 	callers := make([]byte, 0, 1024)
 	for {
 		pc, file, line, ok = runtime.Caller(skip)
 		if !ok {
-			return ToString(callers[:len(callers)])
+			return ToString(callers[:])
 		}
 		if strings.Contains(file, "/src/runtime/") {
 			skip++
@@ -123,7 +122,7 @@ func CallStack(skip int) string {
 		callers = append(callers, ')')
 		skip++
 		if skip > depth {
-			return ToString(callers[:len(callers)])
+			return ToString(callers[:])
 		}
 	}
 }

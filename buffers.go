@@ -10,7 +10,6 @@ import (
 
 type syncBuffer struct {
 	buf     *bytes.Buffer
-	c       int32
 	maxSize int
 	l       *Log
 	lo      *sync.Mutex
@@ -52,7 +51,6 @@ func (sb *syncBuffer) flushAsBytes() []byte {
 
 type recordBuffer struct {
 	buf     *bytes.Buffer
-	c       int32
 	maxSize int
 	l       *Log
 	lo      *sync.Mutex

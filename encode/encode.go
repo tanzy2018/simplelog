@@ -2,13 +2,13 @@ package encode
 
 import (
 	"encoding/json"
-	"github.com/tanzy2018/simplelog/internal"
 	"reflect"
 	"strconv"
+
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 var toBytes = internal.ToBytes
-var toString = internal.ToString
 
 type imeta struct {
 	key   []byte
@@ -113,7 +113,7 @@ func Ints(key string, ints []int) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -139,7 +139,7 @@ func Int8s(key string, ints []int8) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -166,7 +166,7 @@ func Int16s(key string, ints []int16) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -192,7 +192,7 @@ func Int32s(key string, ints []int32) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -221,7 +221,7 @@ func Int64s(key string, ints []int64) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -247,7 +247,7 @@ func Uints(key string, ints []uint) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -276,7 +276,7 @@ func Uint8s(key string, ints []uint8) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -314,7 +314,7 @@ func Uint16s(key string, ints []uint16) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -340,7 +340,7 @@ func Uint32s(key string, ints []uint32) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -369,7 +369,7 @@ func Uint64s(key string, ints []uint64) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -398,7 +398,7 @@ func Float32s(key string, ints []float32) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -428,7 +428,7 @@ func Float64s(key string, ints []float64) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -462,7 +462,7 @@ func Strings(key string, strs []string) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
 
@@ -491,150 +491,9 @@ func Bools(key string, bs []bool) Meta {
 	vals = append(vals, ']')
 	return imeta{
 		key:   toBytes(key),
-		value: vals[:len(vals)],
+		value: vals,
 	}
 }
-
-// Object ... map(*map) or struct(*struct)
-// func any_bak(key string, val interface{}) Meta {
-// 	if val == nil {
-// 		return nullImeta(key)
-// 	}
-
-// 	v := reflect.ValueOf(val)
-// 	if v.Kind() == reflect.Ptr {
-// 		if !v.Elem().IsValid() {
-// 			return nullImeta(key)
-// 		}
-// 		v = reflect.ValueOf(v.Elem().Interface())
-// 	}
-
-// 	kind := v.Kind()
-// 	if kind == reflect.Struct {
-// 		buf := make([]byte, 0, 2)
-// 		buf = append(buf, '{')
-// 		for i := 0; i < v.NumField(); i++ {
-// 			if i > 0 {
-// 				buf = append(buf, ',')
-// 			}
-// 			field := v.Type().Field(i)
-// 			name := field.Tag.Get("json")
-// 			if len(name) == 0 {
-// 				name = field.Name
-// 			}
-// 			md := Any(name, v.Field(i).Interface())
-// 			buf = append(buf, '"')
-// 			buf = append(buf, md.Key()...)
-// 			buf = append(buf, '"')
-// 			buf = append(buf, ':')
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 			buf = append(buf, md.Value()...)
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 		}
-// 		buf = append(buf, '}')
-
-// 		return imeta{
-// 			key:   toBytes(key),
-// 			value: buf,
-// 		}
-// 	}
-
-// 	if kind == reflect.Map {
-// 		if v.IsNil() {
-// 			return nullImeta(key)
-// 		}
-// 		mIter := v.MapRange()
-// 		buf := make([]byte, 0, 2)
-// 		i := 0
-// 		buf = append(buf, '{')
-// 		for mIter.Next() {
-// 			if i > 0 {
-// 				buf = append(buf, ',')
-// 			}
-// 			md := Any(toString(append([]byte{}, Any("", mIter.Key().Interface()).Value()...)),
-// 				mIter.Value().Interface())
-// 			buf = append(buf, '"')
-// 			buf = append(buf, md.Key()...)
-// 			buf = append(buf, '"')
-// 			buf = append(buf, ':')
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 			buf = append(buf, md.Value()...)
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 			i++
-// 		}
-// 		buf = append(buf, '}')
-
-// 		return imeta{
-// 			key:   toBytes(key),
-// 			value: buf,
-// 		}
-// 	}
-
-// 	if kind == reflect.Slice {
-// 		if v.IsNil() || v.Len() == 0 {
-// 			return emptyArrayImeta(key)
-// 		}
-
-// 		if u8s, ok := v.Interface().([]uint8); ok {
-// 			return Uint8s(key, u8s)
-// 		}
-
-// 		buf := make([]byte, 0, 2)
-// 		buf = append(buf, '[')
-// 		for i := 0; i < v.Len(); i++ {
-// 			if i > 0 {
-// 				buf = append(buf, ',')
-// 			}
-// 			md := Any("", v.Index(i).Interface())
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 			buf = append(buf, md.Value()...)
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 		}
-// 		buf = append(buf, ']')
-// 		return imeta{
-// 			key:   toBytes(key),
-// 			value: buf,
-// 		}
-// 	}
-
-// 	if kind == reflect.Array {
-// 		buf := make([]byte, 0, 2)
-// 		buf = append(buf, '[')
-// 		for i := 0; i < v.Len(); i++ {
-// 			if i > 0 {
-// 				buf = append(buf, ',')
-// 			}
-// 			md := Any("", v.Index(i).Interface())
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 			buf = append(buf, md.Value()...)
-// 			if md.Wrap() {
-// 				buf = append(buf, '"')
-// 			}
-// 		}
-// 		buf = append(buf, ']')
-// 		return imeta{
-// 			key:   toBytes(key),
-// 			value: buf,
-// 		}
-// 	}
-
-// 	return nullImeta(key)
-
-// }
 
 func any(key string, val interface{}) Meta {
 	if val == nil {

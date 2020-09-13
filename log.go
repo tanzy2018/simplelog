@@ -174,7 +174,7 @@ func (l *Log) sync() {
 		return
 	}
 	l.curFileSize += int64(len(b))
-	l.wc.Write(b)
+	_, _ = l.wc.Write(b)
 	l.orChangeFileWriter()
 }
 

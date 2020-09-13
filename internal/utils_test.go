@@ -1,8 +1,9 @@
 package internal_test
 
 import (
-	. "github.com/tanzy2018/simplelog/internal"
 	"testing"
+
+	. "github.com/tanzy2018/simplelog/internal"
 )
 
 func TestToString(t *testing.T) {

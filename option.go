@@ -2,11 +2,12 @@ package simplelog
 
 import (
 	"fmt"
-	"github.com/tanzy2018/simplelog/internal"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/tanzy2018/simplelog/internal"
 )
 
 var defaultOption = _defaultOPtion()
@@ -55,10 +56,6 @@ func (op *options) fullPath() string {
 		strings.Trim(strings.ReplaceAll(op.fname, "\\", "/"), "/"))
 }
 
-func (op *options) basePath() string {
-	return path.Base(op.fname)
-}
-
 func (op *options) rename() string {
 	full := op.fullPath()
 	base := path.Base(op.fname)
@@ -95,13 +92,6 @@ func (op *options) updateFileOption(root, topic, fname string) {
 	op.root = root
 	op.topic = topic
 	op.fname = fname
-}
-
-func (op *options) isValidFileName() bool {
-	if len(op.fullPath()) == 0 {
-		return false
-	}
-	return true
 }
 
 // WithMaxFileSize ...
